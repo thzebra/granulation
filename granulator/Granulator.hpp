@@ -13,11 +13,12 @@ public:
     float synthetize();
     void generate(int n);
     int sampleRate();
+    unsigned int bufferFrames{0};
 
 private:
     Scheduler m_scheduler;
-    Envelope* m_envelope {};
-    Source* m_source {};
+    Envelope* m_envelope;
+    Source* m_source;
 };
 
 }

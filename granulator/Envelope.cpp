@@ -13,7 +13,7 @@ Envelope::Envelope(const Envelope& env) {
 
 const float Envelope::data(int i) const {
     if (i >= m_data.size() || i < 0)
-        return 0;
+        return 0.f;
     else
         return m_data[i];
 }
@@ -25,6 +25,10 @@ const std::vector<float> Envelope::data() const {
 
 const unsigned Envelope::size() const {
     return m_data.size();
+}
+
+Envelope::~Envelope() {
+    m_data.~vector();
 }
 
 }

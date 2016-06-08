@@ -38,7 +38,7 @@ void Scheduler::setStrategy(SequenceStrategy *strategy) {
     m_strategy = strategy;
 }
 
-void Scheduler::addGrain(Envelope *e, Source *s) {
+void Scheduler::addGrain(Envelope& e, Source& s) {
     qDebug() << "adding new grain";
     m_grains.push_back(Grain(e, s));
 }
@@ -62,6 +62,10 @@ void Scheduler::removeCompleted() {
         if ((*it).completed())
             m_grains.erase(it);
     }
+}
+
+int Scheduler::grainCount() const {
+    return m_grains.size();
 }
 
 }

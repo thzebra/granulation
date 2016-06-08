@@ -13,6 +13,8 @@ public:
     virtual float data(int i) const = 0;
     virtual int sampleRate() const = 0;
     virtual void setSource(std::string filename);
+
+    virtual ~SourceData() = default;
 };
 
 }

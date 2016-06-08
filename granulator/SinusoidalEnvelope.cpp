@@ -1,5 +1,5 @@
 #include "SinusoidalEnvelope.hpp"
-#include <math.h>
+#include <cmath>
 
 namespace Granulation {
 namespace Synthesis {
@@ -13,7 +13,7 @@ void SinusoidalEnvelope::fill() {
 
     int s = size();
     for (int i = 0; i < s; ++i)
-        m_data[i] = sin(M_PI * i / s);
+        m_data[i] = std::sin(M_PI * i / s);
 }
 
 }

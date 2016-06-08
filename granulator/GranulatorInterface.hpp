@@ -24,8 +24,6 @@ public:
     GranulatorInterface(QWidget *parent = 0);
     ~GranulatorInterface();
 
-    void addPoint(QPoint);
-
     QPushButton* m_button{};
     QLabel* m_label{};
     QVBoxLayout* m_layout{};
@@ -35,8 +33,11 @@ public:
 
     Granulator* granulator;
 
+    void addPoint(QPoint);
+
 public slots:
     void updateLabel();
+    void addPoint(QMouseEvent* m);
 
 private:
     std::vector<QPoint> m_points;

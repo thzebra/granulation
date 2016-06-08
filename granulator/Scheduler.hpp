@@ -16,8 +16,9 @@ public:
     Scheduler(SequenceStrategy* strategy);
     float synthetize();
     void setStrategy(SequenceStrategy* strategy);
-    void addGrain(Envelope* e, Source* s);
+    void addGrain(Envelope& e, Source& s);
     void activateNext();
+    int grainCount() const;
 
 private:
     std::vector<Grain> m_grains;

@@ -13,6 +13,7 @@ public:
     const float data(int i) const;
     const std::vector<float> data() const;
     virtual void fill() = 0;
+    virtual ~Envelope();
 
 protected:
     std::vector<float> m_data;
