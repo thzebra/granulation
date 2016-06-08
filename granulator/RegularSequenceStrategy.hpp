@@ -19,11 +19,11 @@ public:
 
     virtual int nextDuration();
     virtual int nextOnset();
+    virtual bool update(double streamTime);
 
 private:
     int m_density; // number of grain onsets per second
     int m_length; // length of each grain in ms
-    int m_nextonset;
 };
 
 }

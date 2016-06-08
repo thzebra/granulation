@@ -13,15 +13,13 @@ Scheduler::Scheduler(SequenceStrategy *strategy) :
 {}
 
 float Scheduler::synthetize() {
-    qDebug() << "scheduler is synthetizing from" << m_grains.size() << "grains";
+    //qDebug() << "scheduler is synthetizing from" << m_grains.size() << "grains";
     int nactive = 0;
     int ncompleted = 0;
     float amp = 0.f;
-    auto it = m_grains.begin();
-    for (; it != m_grains.end(); ++it) {
-        auto grain = *it;
-        if (grain.isActive()) {
-            qDebug() << "grain is active";
+    for (auto it = m_grains.begin(); it != m_grains.end(); ++it) {
+        Grain grain = *it;
+        if (grain.isActive() && !grain.completed()) {
             amp += grain.synthetize();
             ++it;
             ++nactive;
@@ -30,7 +28,8 @@ float Scheduler::synthetize() {
             ++ncompleted;
     }
     removeCompleted();
-    qDebug() << nactive << "grains were active and" << ncompleted << "grains completed for a synthetized value of" << amp;
+    if (nactive > 0)
+        qDebug() << nactive << "grains were active and" << ncompleted << "grains completed for a synthetized value of" << amp;
     return amp;
 }
 
@@ -44,28 +43,37 @@ void Scheduler::addGrain(Envelope& e, Source& s) {
 }
 
 void Scheduler::activateNext() {
-    qDebug() << "activating next grain...";
     auto it = m_grains.begin();
     for (; it != m_grains.end() && it->isActive(); ++it) {}
     if (it != m_grains.end()) {
         it->activate(m_strategy->nextDuration());
         qDebug() << "grain was activated";
     }
-    else {
-        qDebug() << "no grain was activated";
-    }
 }
 
 void Scheduler::removeCompleted() {
-    for (auto it = m_grains.end(); it != m_grains.begin();) {
-        --it;
-        if ((*it).completed())
-            m_grains.erase(it);
+    int n = 0;
+    for (int i = 0; i < m_grains.size();) {
+        Grain g = m_grains[i];
+        if (g.completed()) {
+            m_grains.erase(std::next(m_grains.begin(), i));
+            ++n;
+        }
+        else {
+            ++i;
+        }
     }
+    if (n > 0)
+        qDebug() << "removed" << n << "grains out of" << grainCount();
 }
 
 int Scheduler::grainCount() const {
     return m_grains.size();
+}
+
+void Scheduler::updateTime(double streamTime) {
+    if (m_grains.size() > 0 && m_strategy->update(streamTime))
+        activateNext();
 }
 
 }

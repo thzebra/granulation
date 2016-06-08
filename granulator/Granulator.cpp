@@ -18,7 +18,6 @@ void Granulator::setStrategy(SequenceStrategy *strategy) {
 }
 
 float Granulator::synthetize() {
-    qDebug() << "granulator called synthetize";
     return m_scheduler.synthetize();
 }
 
@@ -32,6 +31,10 @@ void Granulator::generate(int n) {
 int Granulator::sampleRate() {
     return m_source->sampleRate();
     return 0;
+}
+
+void Granulator::updateTime(double streamTime) {
+    m_scheduler.updateTime(streamTime);
 }
 
 }

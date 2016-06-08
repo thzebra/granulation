@@ -19,6 +19,7 @@ public:
     void addGrain(Envelope& e, Source& s);
     void activateNext();
     int grainCount() const;
+    void updateTime(double streamTime);
 
 private:
     std::vector<Grain> m_grains;

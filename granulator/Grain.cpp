@@ -10,7 +10,8 @@ Grain::Grain(Envelope& e, Source& s) :
     m_readBackwards{false},
     m_index(0),
     m_source{s},
-    m_envelope{e}
+    m_envelope{e},
+    m_completed{false}
 {}
 
 Grain::Grain(const Grain & grain) :
@@ -18,7 +19,9 @@ Grain::Grain(const Grain & grain) :
     m_readBackwards{grain.m_readBackwards},
     m_index{grain.m_index},
     m_source{grain.m_source},
-    m_envelope{grain.m_envelope}
+    m_envelope{grain.m_envelope},
+    m_completed{grain.completed()},
+    m_duration{grain.m_duration}
 {}
 
 void Grain::operator =(const Grain& grain) {
@@ -26,68 +29,43 @@ void Grain::operator =(const Grain& grain) {
 }
 
 bool Grain::completed() const {
-    return isActive() &&  (m_index >= m_source.size() / m_speedRatio);
+    return m_completed;
 }
 
 void Grain::activate(int duration) {
     qDebug() << "grain is being activated for duration" << duration;
     if (duration != 0) {
+        m_completed = false;
         m_active = true;
-        int d = std::abs(duration);
+        m_index = 0;
+        m_duration = std::abs(duration);
+
         if (duration > 0) {
             m_readBackwards = false;
-            m_index = 0;
         }
         else {
-            m_index = m_source.size() - 1;
             m_readBackwards = true;
             qDebug() << "grain will be read backwards";
         }
-        if (m_source.size() > 0) {
-            float samplerate = (1000 * m_source.size()) / d;
-            m_speedRatio = samplerate / m_source.sampleRate();
-        }
+        m_sampleRate = 1000 * m_source.size() / m_duration;
+        qDebug() << m_source.size() << m_duration;
+        qDebug() << "grain has a normal duration of" << (1000 * m_source.size() / m_source.sampleRate()) << "ms"
+                 << "so a duration of" << m_duration << "ms will be achieved with a sample rate of" << m_sampleRate;
     }
 }
 
 float Grain::synthetize() {
-    qDebug() << "grain is synthetizing";
-    float res = 0.f;
-    if (m_speedRatio > 1) {
-        int nSamples = (int)(m_speedRatio + 0.5);
-        if (m_readBackwards) {
-            float synthSample = 0.f;
-            int imin = std::max(0, m_index - nSamples);
-            for (int i = m_index; i > imin; --i) {
-                synthSample += m_envelope.data(i) * m_source.data(i);
-            }
-            --m_index;
-            res = synthSample / nSamples;
-        }
-        else {
-            float synthSample = 0.f;
-            int imax = std::min(nSamples, (int)m_source.size());
-            for (int i = m_index; i < imax; ++i) {
-                synthSample += m_envelope.data(i) * m_source.data(i);
-            }
-            ++m_index;
-            res = synthSample / imax;
-        }
+    if (m_index >= m_duration * m_sampleRate / 1000 || m_index < 0) {
+        m_completed = true;
+        return 0.f;
     }
-    else {
-        int i;
-        if (!m_readBackwards) {
-            i = m_speedRatio * m_index;
-            ++m_index;
-        }
-        else {
-            int i = m_source.size() - m_speedRatio * m_index;
-            --m_index;
-        }
-        res = m_source.data(i) * m_envelope.data(i);
-    }
-    qDebug() << "result is" << res;
-    return res;
+    qDebug() << m_index << (m_duration * m_sampleRate / 1000) << m_duration << m_sampleRate;
+    int idx = m_index * m_source.sampleRate() / m_sampleRate;
+    qDebug() << "synthetizing sample n°" << m_index << "with sample rate" << m_sampleRate << "taking sample n°" << idx;
+    if (m_readBackwards)
+        idx = m_source.size() - 1 - idx;
+    ++m_index;
+    return m_source.data(idx) * m_envelope.data(idx);
 }
 
 bool Grain::isActive() const {

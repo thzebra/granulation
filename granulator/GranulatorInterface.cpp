@@ -41,6 +41,7 @@ void GranulatorInterface::addPoint(QPoint p) {
     m_points.push_back(p);
     if (m_points.size() > m_maxpoints)
         m_points.erase(m_points.begin());
+    granulator->generate(1);
 }
 
 void GranulatorInterface::addPoint(QMouseEvent *m) {

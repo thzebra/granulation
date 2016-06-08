@@ -14,6 +14,7 @@ public:
     void generate(int n);
     int sampleRate();
     unsigned int bufferFrames{0};
+    void updateTime(double streamTime);
 
 private:
     Scheduler m_scheduler;

@@ -21,9 +21,11 @@ private:
     Envelope& m_envelope;
     Source& m_source;
     int m_index {0};
-    float m_speedRatio {1.f};
+    int m_sampleRate {44100};
+    int m_duration {0}; // in ms
     bool m_active {false};
     bool m_readBackwards {false};
+    bool m_completed {false};
 };
 
 

@@ -37,12 +37,6 @@ int main(int argc, char *argv[])
     g->setEssence(env, src);
     g->setStrategy(strat);
 
-    int callback (void *outputBuffer, void *inputBuffer,
-                                    unsigned int nFrames,
-                                    double streamTime,
-                                    RtAudioStreamStatus status,
-                                    void *userData );
-
     QApplication a(argc, argv);
     Panel::GranulatorInterface* w = new Panel::GranulatorInterface ();
 
@@ -109,14 +103,7 @@ void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCall
 
         auto devinfo = api->getDeviceInfo((unsigned int) device);
         qDebug() << "Setting up stream for device" << device << "of name" << devinfo.name.c_str();
-        int16_t fmts = devinfo.nativeFormats;
-        int16_t format = 32;
-        qDebug() << fmts - format;
-
-        for (; fmts - format < 0 && format >= 1; format /= 2) {
-            qDebug() << fmts << format << fmts - format;
-        }
-        qDebug() << "using format" << format2QString(format);
+        RtAudioFormat format = RTAUDIO_SINT16;
 
         RtAudioStreamFlags flags = RTAUDIO_MINIMIZE_LATENCY
                 | RTAUDIO_HOG_DEVICE
@@ -147,16 +134,16 @@ void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCall
 
 int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
-    if (status == RTAUDIO_OUTPUT_UNDERFLOW)
-        qDebug() << "output underflow detected";
 
     Synthesis::Granulator* g = (Synthesis::Granulator*)userData;
+    //qDebug() << streamTime << "seconds elapsed since beginning";
 
     if (g) {
-        float* out = (float*) outputBuffer;
+        int16_t* out = (int16_t*) outputBuffer;
         for (unsigned int i = 0; i < nFrames; ++i) {
             for (int j = 0; j < 2; ++j) {
-                out[2 * i + j] = g->synthetize();
+                g->updateTime(streamTime);
+                out[2 * i + j] = g->synthetize() * 65536;
             }
         }
     }
