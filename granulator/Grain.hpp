@@ -1,14 +1,18 @@
 #pragma once
 #include "Envelope.hpp"
 #include "Source.hpp"
+#include <string>
 
 namespace Granulation {
 namespace Synthesis {
 
 class Grain {
 public:
+    //Grain();
     Grain(Envelope& e, Source& s);
     Grain(const Grain&);
+    ~Grain();
+
 
     bool completed() const;
     void activate(int duration);
@@ -16,6 +20,7 @@ public:
     bool isActive() const;
     bool isReadBackwards() const;
     void operator=(const Grain&);
+    std::string grainToString() const;
 
 private:
     Envelope& m_envelope;

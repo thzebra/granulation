@@ -13,11 +13,13 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_button{new QPushButton("Generate!")},
       m_label{new QLabel},
       m_layout{new QVBoxLayout},
-      m_points{std::vector<QPoint> ()},
+      m_points{std::vector<QPoint> (0)},
       m_devices{new QComboBox},
       m_drawingArea{new DrawingArea},
       m_maxpoints(100)
 {
+    resize(600, 600);
+
     m_layout->addWidget(m_drawingArea);
     m_layout->addWidget(m_devices);
     m_layout->addWidget(m_button);
@@ -34,13 +36,14 @@ GranulatorInterface::~GranulatorInterface()
     delete m_label;
     delete m_layout;
     delete m_central;
+    m_points.~vector();
 }
 
 void GranulatorInterface::addPoint(QPoint p) {
-    qDebug("adding point (%d, %d)", p.x(), p.y());
     m_points.push_back(p);
-    if (m_points.size() > m_maxpoints)
-        m_points.erase(m_points.begin());
+    qDebug("adding point (%d, %d)", p.x(), p.y());
+//    if (m_points.size() > m_maxpoints)
+//        m_points.erase(m_points.begin());
     granulator->generate(1);
 }
 

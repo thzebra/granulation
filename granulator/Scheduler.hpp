@@ -16,7 +16,7 @@ public:
     Scheduler(SequenceStrategy* strategy);
     float synthetize();
     void setStrategy(SequenceStrategy* strategy);
-    void addGrain(Envelope& e, Source& s);
+    void addGrain(Envelope* e, Source* s);
     void activateNext();
     int grainCount() const;
     void updateTime(double streamTime);

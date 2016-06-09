@@ -5,7 +5,9 @@ namespace Granulation {
 namespace Synthesis {
 
 SinusoidalEnvelope::SinusoidalEnvelope() {}
-SinusoidalEnvelope::SinusoidalEnvelope(int length) : Envelope(length) {}
+SinusoidalEnvelope::SinusoidalEnvelope(int length) : Envelope(length) {
+    fill();
+}
 
 void SinusoidalEnvelope::fill() {
     if (size() == 0)

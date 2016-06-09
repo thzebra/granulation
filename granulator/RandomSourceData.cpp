@@ -1,12 +1,16 @@
 #include "RandomSourceData.hpp"
 #include <cstdlib>
 #include <time.h>
+#include <QDebug>
 
 namespace Granulation {
 namespace Synthesis {
 
 RandomSourceData::RandomSourceData() {}
-RandomSourceData::RandomSourceData(int length) : m_data(std::vector<float> (length, 0.f)){}
+RandomSourceData::RandomSourceData(int length) : m_data(std::vector<float> (length, 0.f)){
+    // qDebug() << "created random source data with length" << m_data.size() << length;
+    populate();
+}
 
 void RandomSourceData::populate() {
     int s = m_data.size();

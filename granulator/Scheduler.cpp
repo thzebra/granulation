@@ -13,19 +13,23 @@ Scheduler::Scheduler(SequenceStrategy *strategy) :
 {}
 
 float Scheduler::synthetize() {
-    //qDebug() << "scheduler is synthetizing from" << m_grains.size() << "grains";
+    if (m_grains.size() == 0)
+        return 0.f;
+
+    qDebug() << "scheduler is synthetizing from" << m_grains.size() << "grains";
     int nactive = 0;
     int ncompleted = 0;
     float amp = 0.f;
-    for (auto it = m_grains.begin(); it != m_grains.end(); ++it) {
-        Grain grain = *it;
-        if (grain.isActive() && !grain.completed()) {
-            amp += grain.synthetize();
-            ++it;
+    std::vector<Grain>::iterator it;
+    for (it = m_grains.begin(); it != m_grains.end(); ++it) {
+        if (it->isActive() && !it->completed()) {
+            qDebug() << "adding sample from grain" << it->grainToString().c_str();
+            amp += it->synthetize();
             ++nactive;
+            if (it->completed())
+                ++ncompleted;
+            qDebug() << "synthetized grain is" << it->grainToString().c_str();
         }
-        if (grain.completed())
-            ++ncompleted;
     }
     removeCompleted();
     if (nactive > 0)
@@ -37,9 +41,9 @@ void Scheduler::setStrategy(SequenceStrategy *strategy) {
     m_strategy = strategy;
 }
 
-void Scheduler::addGrain(Envelope& e, Source& s) {
+void Scheduler::addGrain(Envelope* e, Source* s) {
     qDebug() << "adding new grain";
-    m_grains.push_back(Grain(e, s));
+    m_grains.push_back(Grain(*e, *s));
 }
 
 void Scheduler::activateNext() {

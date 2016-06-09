@@ -24,7 +24,7 @@ float Granulator::synthetize() {
 void Granulator::generate(int n) {
     qDebug() << "granulator is generating" << n << "new grains";
     for (int i = 0; i < n; ++i) {
-        m_scheduler.addGrain(*m_envelope, *m_source);
+        m_scheduler.addGrain(m_envelope, m_source);
     }
 }
 

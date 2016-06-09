@@ -29,9 +29,11 @@ int main(int argc, char *argv[])
     int density = 100; // grains per second
 
     Synthesis::RegularSequenceStrategy* strat = new Synthesis::RegularSequenceStrategy(density, grainDuration);
-    Synthesis::RandomSourceData* data = new Synthesis::RandomSourceData(100000);
+    Synthesis::RandomSourceData* data = new Synthesis::RandomSourceData(10000);
+    //data->populate();
     Synthesis::RandomWindowSource* src = new Synthesis::RandomWindowSource(sourceLength, data);
     Synthesis::SinusoidalEnvelope* env = new Synthesis::SinusoidalEnvelope(sourceLength);
+    //env->fill();
     Synthesis::Granulator* g = new Synthesis::Granulator ();
 
     g->setEssence(env, src);
