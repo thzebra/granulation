@@ -119,7 +119,8 @@ void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCall
             par.nChannels = std::max(devinfo.outputChannels, (unsigned int)1);
 
             api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), &g->bufferFrames, callback, (void*)g, &options);
-            qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with" << par.nChannels << "channels, format" << format << "and" << g->bufferFrames << "buffer frames";
+            qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with"
+                     << par.nChannels << "channels, format" << format << "and" << g->bufferFrames << "buffer frames";
             api->startStream();
         }
         catch (RtAudioError re) {

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 #include "Grain.hpp"
 
 namespace Granulation {
@@ -22,7 +23,7 @@ public:
     void updateTime(double streamTime);
 
 private:
-    std::vector<Grain> m_grains;
+    std::list<Grain> m_grains;
     SequenceStrategy* m_strategy;
     void removeCompleted();
 };

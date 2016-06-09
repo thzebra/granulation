@@ -8,7 +8,7 @@ namespace Synthesis {
 
 Scheduler::Scheduler() {}
 Scheduler::Scheduler(SequenceStrategy *strategy) :
-    m_grains{std::vector<Grain> ()},
+    m_grains{std::list<Grain> ()},
     m_strategy{strategy}
 {}
 
@@ -20,7 +20,7 @@ float Scheduler::synthetize() {
     int nactive = 0;
     int ncompleted = 0;
     float amp = 0.f;
-    std::vector<Grain>::iterator it;
+    std::list<Grain>::iterator it;
     for (it = m_grains.begin(); it != m_grains.end(); ++it) {
         if (it->isActive() && !it->completed()) {
             qDebug() << "adding sample from grain" << it->grainToString().c_str();
@@ -55,20 +55,26 @@ void Scheduler::activateNext() {
     }
 }
 
+bool testCompleted(const Grain& g) {
+    return g.completed();
+}
+
 void Scheduler::removeCompleted() {
-    int n = 0;
-    for (int i = 0; i < m_grains.size();) {
-        Grain g = m_grains[i];
-        if (g.completed()) {
-            m_grains.erase(std::next(m_grains.begin(), i));
-            ++n;
-        }
-        else {
-            ++i;
-        }
-    }
-    if (n > 0)
-        qDebug() << "removed" << n << "grains out of" << grainCount();
+//    int n = 0;
+//    int oldcount = grainCount();
+//    for (int i = 0; i < m_grains.size();) {
+//        Grain g = m_grains[i];
+//        if (g.completed()) {
+//            m_grains.erase(std::next(m_grains.begin(), i));
+//            ++n;
+//        }
+//        else {
+//            ++i;
+//        }
+//    }
+//    if (n > 0)
+//        qDebug() << "removed" << n << "grains out of" << oldcount;
+    m_grains.remove_if(testCompleted);
 }
 
 int Scheduler::grainCount() const {
