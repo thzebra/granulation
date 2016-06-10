@@ -25,9 +25,7 @@ Grain::Grain(const Grain & grain) :
     m_envelope{grain.m_envelope},
     m_completed{grain.m_completed},
     m_duration{grain.m_duration}
-{
-    // qDebug() << "copied grain" << grainToString().c_str();
-}
+{}
 
 void Grain::operator =(const Grain& grain) {
     m_active = grain.m_active;
@@ -41,7 +39,6 @@ void Grain::operator =(const Grain& grain) {
 }
 
 bool Grain::completed() const {
-    // qDebug() << "fetching status of grain" << grainToString().c_str();
     return m_completed;
 }
 
@@ -70,26 +67,17 @@ void Grain::activate(int duration) {
 }
 
 float Grain::synthetize() {
-//    if (m_index >= m_duration * m_sampleRate / 1000 || m_index < 0) {
-//        m_completed = true;
-//        return 0.f;
-//    }
-//    qDebug() << m_index << (m_duration * m_sampleRate / 1000) << m_duration << m_sampleRate;
-//    int idx = m_index * m_source->sampleRate() / m_sampleRate;
-//    qDebug() << "synthetizing sample n°" << m_index << "with sample rate" << m_sampleRate << "taking sample n°" << idx;
-//    if (m_readBackwards)
-//        idx = m_source->size() - 1 - idx;
-//    ++m_index;
-//    return m_source->data(idx) * m_envelope->data(idx);
-    if (m_index >= m_source.size()) {
+    if (m_index >= m_duration * m_sampleRate / 1000 || m_index < 0) {
         m_completed = true;
         return 0.f;
     }
-    int idx = m_index++;
-    // qDebug() << "returning sample number" << idx << m_index;
-    float env = m_envelope.data(idx);
-    float src = m_source.data(idx);
-    return src * env;
+    qDebug() << m_index << (m_duration * m_sampleRate / 1000) << m_duration << m_sampleRate;
+    int idx = m_index * m_source.sampleRate() / m_sampleRate;
+    qDebug() << "synthetizing sample n°" << m_index << "with sample rate" << m_sampleRate << "taking sample n°" << idx;
+    if (m_readBackwards)
+        idx = m_source.size() - 1 - idx;
+    ++m_index;
+    return m_source.data(idx) * m_envelope.data(idx);
 }
 
 bool Grain::isActive() const {
@@ -119,9 +107,7 @@ std::string Grain::grainToString() const {
     return std::string(cstr);
 }
 
-Grain::~Grain() {
-   // qDebug() << "deleting grain" << grainToString().c_str();
-}
+Grain::~Grain() {}
 
 }
 }

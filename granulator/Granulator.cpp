@@ -29,8 +29,9 @@ void Granulator::generate(int n) {
 }
 
 int Granulator::sampleRate() {
-    return m_source->sampleRate();
-    return 0;
+    if (m_source)
+        return m_source->sampleRate();
+    return 44100;
 }
 
 void Granulator::updateTime(double streamTime) {

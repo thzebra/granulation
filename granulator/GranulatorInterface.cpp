@@ -16,7 +16,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_points{std::vector<QPoint> (0)},
       m_devices{new QComboBox},
       m_drawingArea{new DrawingArea},
-      m_maxpoints(100)
+      m_maxpoints(100),
+      m_pan{0}
 {
     resize(600, 600);
 
@@ -41,9 +42,7 @@ GranulatorInterface::~GranulatorInterface()
 
 void GranulatorInterface::addPoint(QPoint p) {
     m_points.push_back(p);
-    qDebug("adding point (%d, %d)", p.x(), p.y());
-//    if (m_points.size() > m_maxpoints)
-//        m_points.erase(m_points.begin());
+    setPan((2 * (float)p.x() / (float)m_central->height()) - 1.f);
     granulator->generate(1);
 }
 
@@ -53,6 +52,22 @@ void GranulatorInterface::addPoint(QMouseEvent *m) {
 
 void GranulatorInterface::updateLabel() {
     m_label->setText(QString::number(granulator->synthetize()));
+}
+
+float GranulatorInterface::pan() {
+    return m_pan;
+}
+
+void GranulatorInterface::setPan(float p) {
+    if (p < -1.f) {
+        m_pan = -1.f;
+        return;
+    }
+    if (p > 1.f) {
+        m_pan = 1.f;
+        return;
+    }
+    m_pan = p;
 }
 
 }

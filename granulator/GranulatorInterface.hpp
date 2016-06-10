@@ -31,7 +31,10 @@ public:
     QComboBox* m_devices{};
     DrawingArea* m_drawingArea{};
 
-    Granulator* granulator;
+    Granulator* granulator{};
+
+    float pan();
+    void setPan(float p);
 
     void addPoint(QPoint);
 
@@ -42,6 +45,7 @@ public slots:
 private:
     std::vector<QPoint> m_points;
     const unsigned int m_maxpoints;
+    float m_pan {0.f};
 };
 
 }

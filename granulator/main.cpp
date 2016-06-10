@@ -14,7 +14,7 @@
 using namespace Granulation;
 
 QString typeToQString(const RtAudioError::Type t);
-void setupStream(int dev, Synthesis::Granulator* g, RtAudio* api, RtAudioCallback callback);
+void setupStream(int dev, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback);
 int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             double streamTime, RtAudioStreamStatus status, void *userData);
 QString format2QString(const RtAudioFormat& f);
@@ -24,9 +24,9 @@ int main(int argc, char *argv[])
     RtAudio* api = new RtAudio ();
 
     int sampleRate = 44100;
-    int grainDuration = 30; // duration in ms
+    int grainDuration = 10; // duration in ms
     int sourceLength = grainDuration * sampleRate / 1000; // number of samples in the source
-    int density = 100; // grains per second
+    int density = 500; // grains per second
 
     Synthesis::RegularSequenceStrategy* strat = new Synthesis::RegularSequenceStrategy(density, grainDuration);
     Synthesis::RandomSourceData* data = new Synthesis::RandomSourceData(10000);
@@ -46,12 +46,12 @@ int main(int argc, char *argv[])
     for (unsigned int i = 0; i < ndev; ++i) {
         w->m_devices->addItem(QString(api->getDeviceInfo(i).name.c_str()));
     }
-    setupStream(0, g, api, output);
-
     w->granulator = g;
 
+    setupStream(0, w, api, output);
+
     QWidget::connect(w->m_button, &QPushButton::clicked, w, &Panel::GranulatorInterface::updateLabel);
-    QWidget::connect(w->m_devices, static_cast<void (QComboBox::*)(int)> (&QComboBox::currentIndexChanged), [=] (int idx) {setupStream(idx, g, api, output);});
+    QWidget::connect(w->m_devices, static_cast<void (QComboBox::*)(int)> (&QComboBox::currentIndexChanged), [=] (int idx) {setupStream(idx, w, api, output);});
     QWidget::connect(w->m_drawingArea, &Panel::DrawingArea::mouseMoveEvent, w, static_cast<void (Panel::GranulatorInterface::*)(QMouseEvent*)> (&Panel::GranulatorInterface::addPoint));
 
     w->show();
@@ -98,10 +98,12 @@ QString typeToQString(const RtAudioError::Type t) {
     return qstr;
 }
 
-void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCallback callback) {
+void setupStream(int device, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback) {
     if (api) {
         if (api->isStreamOpen())
             api->closeStream();
+
+        Synthesis::Granulator* g = w->granulator;
 
         auto devinfo = api->getDeviceInfo((unsigned int) device);
         qDebug() << "Setting up stream for device" << device << "of name" << devinfo.name.c_str();
@@ -118,7 +120,7 @@ void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCall
             par.deviceId = device;
             par.nChannels = std::max(devinfo.outputChannels, (unsigned int)1);
 
-            api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), &g->bufferFrames, callback, (void*)g, &options);
+            api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), &g->bufferFrames, callback, (void*)w, &options);
             qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with"
                      << par.nChannels << "channels, format" << format << "and" << g->bufferFrames << "buffer frames";
             api->startStream();
@@ -138,19 +140,21 @@ void setupStream(int device, Synthesis::Granulator* g, RtAudio* api, RtAudioCall
 int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
 
-    Synthesis::Granulator* g = (Synthesis::Granulator*)userData;
+    Panel::GranulatorInterface* w = (Panel::GranulatorInterface*) userData;
+    Synthesis::Granulator* g = w->granulator;
     //qDebug() << streamTime << "seconds elapsed since beginning";
 
     if (g) {
         int16_t* out = (int16_t*) outputBuffer;
+        g->updateTime(streamTime);
+        float left = (1.f - w->pan()) / 2.f;
+        float right = (1.f + w->pan()) / 2.f;
         for (unsigned int i = 0; i < nFrames; ++i) {
-            for (int j = 0; j < 2; ++j) {
-                g->updateTime(streamTime);
-                out[2 * i + j] = g->synthetize() * 65536;
-            }
+            float ampf = g->synthetize() * 32768;
+            out[2 * i] = left * ampf;
+            out[2 * i + 1] = right * ampf;
         }
     }
-
     return 0;
 }
 
