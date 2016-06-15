@@ -8,14 +8,12 @@ namespace Synthesis {
 
 //Grain::Grain() {}
 
-Grain::Grain(Envelope& e, Source& s) :
-    m_active{false},
-    m_readBackwards{false},
-    m_index(0),
+Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s) :
     m_source{s},
-    m_envelope{e},
-    m_completed{false}
-{}
+    m_envelope{e}
+{
+
+}
 
 Grain::Grain(const Grain & grain) :
     m_active{grain.m_active},
@@ -23,16 +21,17 @@ Grain::Grain(const Grain & grain) :
     m_index{grain.m_index},
     m_source{grain.m_source},
     m_envelope{grain.m_envelope},
-    m_completed{grain.m_completed},
-    m_duration{grain.m_duration}
-{}
+    m_completed{grain.m_completed}
+    //m_duration{grain.m_duration}
+{
+
+}
 
 void Grain::operator =(const Grain& grain) {
     m_active = grain.m_active;
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
-    m_duration = grain.m_duration;
-    m_sampleRate = grain.m_sampleRate;
+    //m_duration = grain.m_duration;
     m_index = grain.m_index;
     m_source = grain.m_source;
     m_envelope = grain.m_envelope;
@@ -43,41 +42,37 @@ bool Grain::completed() const {
 }
 
 void Grain::activate(int duration) {
-    qDebug() << "grain is being activated for duration" << duration;
+    //qDebug() << "grain is being activated for duration" << duration;
     if (duration != 0) {
         m_completed = false;
         m_active = true;
         m_index = 0;
-        qDebug() << "reset m_index to 0";
-        m_duration = std::abs(duration);
+        m_channelindex = 0;
+        //m_duration = std::abs(duration);
 
         if (duration > 0) {
             m_readBackwards = false;
         }
         else {
             m_readBackwards = true;
-            qDebug() << "grain will be read backwards";
+            //qDebug() << "grain will be read backwards";
         }
-        m_sampleRate = 1000 * m_source.size() / m_duration;
-        qDebug() << m_source.size() << m_duration;
-        qDebug() << "grain has a normal duration of" << (1000 * m_source.size() / m_source.sampleRate()) << "ms"
-                 << "so a duration of" << m_duration << "ms will be achieved with a sample rate of" << m_sampleRate;
     }
-    qDebug() << "updated grain is" << grainToString().c_str();
 }
 
 float Grain::synthetize() {
-    if (m_index >= m_duration * m_sampleRate / 1000 || m_index < 0) {
-        m_completed = true;
-        return 0.f;
+    if (m_index * m_source->channels() + m_channelindex >= m_source->size() || m_index < 0) {
+        m_index = 0;
+        m_channelindex = 0;
     }
-    qDebug() << m_index << (m_duration * m_sampleRate / 1000) << m_duration << m_sampleRate;
-    int idx = m_index * m_source.sampleRate() / m_sampleRate;
-    qDebug() << "synthetizing sample n°" << m_index << "with sample rate" << m_sampleRate << "taking sample n°" << idx;
+
+    int idx = m_index * m_source->channels();
     if (m_readBackwards)
-        idx = m_source.size() - 1 - idx;
-    ++m_index;
-    return m_source.data(idx) * m_envelope.data(idx);
+        idx = m_source->size() - 1 - idx;
+    m_channelindex = (m_channelindex + 1) % m_source->channels();
+    if (m_channelindex == 0)
+        ++m_index;
+    return m_source->data(idx) * m_envelope->data(m_index);
 }
 
 bool Grain::isActive() const {
@@ -95,8 +90,7 @@ std::string Grain::grainToString() const {
     else
         ss << "Inactive, ";
     ss << "index = " << m_index;
-    ss << ", sample rate: " << m_sampleRate << "Hz";
-    ss << ", duration: " << m_duration << "ms";
+    //ss << ", duration: " << m_duration << "ms";
     ss << ", is read " << (m_readBackwards ? "backwards" : "forward");
     ss << ", has " << (m_completed ? "completed" : "not completed yet");
     std::string str = ss.str();
@@ -106,8 +100,6 @@ std::string Grain::grainToString() const {
     cstr[length] = 0;
     return std::string(cstr);
 }
-
-Grain::~Grain() {}
 
 }
 }

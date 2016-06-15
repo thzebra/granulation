@@ -16,7 +16,7 @@ void RandomSourceData::populate() {
     int s = m_data.size();
     srand(time(nullptr));
     for (int i = 0; i < s; ++i) {
-        int r = rand() % 2001;
+        int r = rand() % 2000;
         m_data[i] = (r - 1000) / 1000.;
     }
 }
@@ -31,6 +31,10 @@ float RandomSourceData::data(int i) const {
 
 int RandomSourceData::sampleRate() const {
     return 44100;
+}
+
+int RandomSourceData::channels() const {
+    return 2;
 }
 
 }

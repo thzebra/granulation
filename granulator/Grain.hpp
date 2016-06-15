@@ -2,6 +2,7 @@
 #include "Envelope.hpp"
 #include "Source.hpp"
 #include <string>
+#include <memory>
 
 namespace Granulation {
 namespace Synthesis {
@@ -9,10 +10,9 @@ namespace Synthesis {
 class Grain {
 public:
     //Grain();
-    Grain(Envelope& e, Source& s);
+    Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s);
     Grain(const Grain&);
-    ~Grain();
-
+    ~Grain() = default;
 
     bool completed() const;
     void activate(int duration);
@@ -23,11 +23,11 @@ public:
     std::string grainToString() const;
 
 private:
-    Envelope& m_envelope;
-    Source& m_source;
+    std::shared_ptr<Envelope> m_envelope;
+    std::shared_ptr<Source> m_source;
     int m_index {0};
-    int m_sampleRate {44100};
-    int m_duration {0}; // in ms
+    int m_channelindex{0};
+    //int m_duration {0}; // in ms
     bool m_active {false};
     bool m_readBackwards {false};
     bool m_completed {false};

@@ -9,7 +9,10 @@ namespace Panel {
 DrawingArea::DrawingArea(QWidget *parent) :
     QWidget(parent)
 {
-    setStyleSheet(QString("QWidget { background-color: white; border: 1px black solid}"));
+    QPalette p;
+    p.setColor(QPalette::Background, Qt::white);
+    setAutoFillBackground(true);
+    setPalette(p);
 }
 
 }

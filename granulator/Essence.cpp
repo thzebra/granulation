@@ -1,8 +1,9 @@
-#include "Granulator.hpp"
-#include <QDebug>
+#include "Essence.hpp"
 
 namespace Granulation {
 namespace Synthesis {
+
+
 
 }
 }

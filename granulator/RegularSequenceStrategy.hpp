@@ -20,6 +20,7 @@ public:
     virtual int nextDuration();
     virtual int nextOnset();
     virtual bool update(double streamTime);
+    virtual int maxDensity() const override;
 
 private:
     int m_density; // number of grain onsets per second

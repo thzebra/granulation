@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QRect>
 
 class QMouseEvent;
 
@@ -16,6 +17,7 @@ public:
 
 signals:
     virtual void mouseMoveEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
 };
 
 }

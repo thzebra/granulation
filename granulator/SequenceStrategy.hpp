@@ -26,6 +26,9 @@ public:
      */
 
     virtual bool update(double streamTime) = 0;
+    virtual ~SequenceStrategy() = default;
+    virtual int maxDensity() const = 0;
+    double totalTime() const;
 
 protected:
     SequenceStrategy(int interonset);

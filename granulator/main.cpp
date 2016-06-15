@@ -10,11 +10,14 @@
 #include <strstream>
 #include <string>
 #include <QMouseEvent>
-
+#include "FileSourceData.hpp"
+#include "Essence.hpp"
+#include <chrono>
 using namespace Granulation;
+using namespace Synthesis;
 
 QString typeToQString(const RtAudioError::Type t);
-void setupStream(int dev, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback);
+void setupStream(int dev, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback, unsigned int* ptr = nullptr);
 int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             double streamTime, RtAudioStreamStatus status, void *userData);
 QString format2QString(const RtAudioFormat& f);
@@ -22,24 +25,29 @@ QString format2QString(const RtAudioFormat& f);
 int main(int argc, char *argv[])
 {
     RtAudio* api = new RtAudio ();
+    unsigned int bufferframes = 0;
 
-    int sampleRate = 44100;
-    int grainDuration = 10; // duration in ms
-    int sourceLength = grainDuration * sampleRate / 1000; // number of samples in the source
-    int density = 500; // grains per second
+    FileSourceData filedata = FileSourceData();
+    filedata.setSource("sample.wav");
 
-    Synthesis::RegularSequenceStrategy* strat = new Synthesis::RegularSequenceStrategy(density, grainDuration);
-    Synthesis::RandomSourceData* data = new Synthesis::RandomSourceData(10000);
-    //data->populate();
-    Synthesis::RandomWindowSource* src = new Synthesis::RandomWindowSource(sourceLength, data);
-    Synthesis::SinusoidalEnvelope* env = new Synthesis::SinusoidalEnvelope(sourceLength);
-    //env->fill();
-    Synthesis::Granulator* g = new Synthesis::Granulator ();
+    int grainDuration = 700; // duration in ms
+    int density = 100; // grains per second
 
-    g->setEssence(env, src);
+    //qDebug() << filedata.channels();
+
+    RegularSequenceStrategy* strat = new RegularSequenceStrategy(density, grainDuration);
+
+    //    using clck = std::chrono::high_resolution_clock;
+
+    //    auto t1 = clck::now();
+    auto g = new Granulator<SinusoidalEnvelope, RandomWindowSource> (std::make_shared<FileSourceData> (filedata), grainDuration);
     g->setStrategy(strat);
+    //g->generate(100);
 
-    QApplication a(argc, argv);
+    //    auto t2 = clck::now();
+    //    std::cerr << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
+
+    QApplication application(argc, argv);
     Panel::GranulatorInterface* w = new Panel::GranulatorInterface ();
 
     unsigned int ndev = api->getDeviceCount();
@@ -48,15 +56,22 @@ int main(int argc, char *argv[])
     }
     w->granulator = g;
 
-    setupStream(0, w, api, output);
+    setupStream(0, w, api, output, &bufferframes);
 
-    QWidget::connect(w->m_button, &QPushButton::clicked, w, &Panel::GranulatorInterface::updateLabel);
-    QWidget::connect(w->m_devices, static_cast<void (QComboBox::*)(int)> (&QComboBox::currentIndexChanged), [=] (int idx) {setupStream(idx, w, api, output);});
-    QWidget::connect(w->m_drawingArea, &Panel::DrawingArea::mouseMoveEvent, w, static_cast<void (Panel::GranulatorInterface::*)(QMouseEvent*)> (&Panel::GranulatorInterface::addPoint));
+    QWidget::connect(w->m_devices,
+                     static_cast<void (QComboBox::*)(int)> (&QComboBox::currentIndexChanged),
+                     [=] (int idx) mutable {setupStream(idx, w, api, output, nullptr);});
+
+    QWidget::connect(w->m_drawingArea,
+                     &Panel::DrawingArea::mouseMoveEvent,
+                     w,
+                     static_cast<void (Panel::GranulatorInterface::*)(QMouseEvent*)> (&Panel::GranulatorInterface::addPoint));
 
     w->show();
 
-    return a.exec();
+    QWidget::connect(&application, &QApplication::aboutToQuit, [=] () { delete api; });
+
+    return application.exec();
 }
 
 QString typeToQString(const RtAudioError::Type t) {
@@ -98,16 +113,16 @@ QString typeToQString(const RtAudioError::Type t) {
     return qstr;
 }
 
-void setupStream(int device, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback) {
+void setupStream(int device, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCallback callback, unsigned int* ptr) {
     if (api) {
         if (api->isStreamOpen())
             api->closeStream();
 
-        Synthesis::Granulator* g = w->granulator;
+        auto g = w->granulator;
 
         auto devinfo = api->getDeviceInfo((unsigned int) device);
-        qDebug() << "Setting up stream for device" << device << "of name" << devinfo.name.c_str();
-        RtAudioFormat format = RTAUDIO_SINT16;
+        //qDebug() << "Setting up stream for device" << device << "of name" << devinfo.name.c_str();
+        RtAudioFormat format = RTAUDIO_FLOAT32;
 
         RtAudioStreamFlags flags = RTAUDIO_MINIMIZE_LATENCY
                 | RTAUDIO_HOG_DEVICE
@@ -118,11 +133,21 @@ void setupStream(int device, Panel::GranulatorInterface* w, RtAudio* api, RtAudi
         try {
             RtAudio::StreamParameters par;
             par.deviceId = device;
-            par.nChannels = std::max(devinfo.outputChannels, (unsigned int)1);
+            par.nChannels = std::min(devinfo.outputChannels, (unsigned int)g->channels());
 
-            api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), &g->bufferFrames, callback, (void*)w, &options);
-            qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with"
-                     << par.nChannels << "channels, format" << format << "and" << g->bufferFrames << "buffer frames";
+            unsigned int* bfptr;
+            if (ptr)
+                bfptr = ptr;
+            else
+                bfptr = &(g->bufferFrames);
+
+            //qDebug() << *bfptr;
+
+
+            api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), bfptr, callback, (void*)w, &options);
+            //api->openStream(&par, nullptr, (unsigned int) format, 48000, intptr, callback, (void*)w, &options);
+            /*qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with"
+                     << par.nChannels << "channels, format" << format2QString(format) << "sample rate" << g->sampleRate() << "and" << *bfptr << "buffer frames";*/
             api->startStream();
         }
         catch (RtAudioError re) {
@@ -141,18 +166,28 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
 
     Panel::GranulatorInterface* w = (Panel::GranulatorInterface*) userData;
-    Synthesis::Granulator* g = w->granulator;
-    //qDebug() << streamTime << "seconds elapsed since beginning";
+    auto g = w->granulator;
+//    qDebug() << streamTime << "seconds elapsed since beginning";
 
+    using clck = std::chrono::high_resolution_clock;
     if (g) {
-        int16_t* out = (int16_t*) outputBuffer;
+        float * out = (float*) outputBuffer;
+
         g->updateTime(streamTime);
-        float left = (1.f - w->pan()) / 2.f;
-        float right = (1.f + w->pan()) / 2.f;
+
+        unsigned int nchannels = g->channels();
         for (unsigned int i = 0; i < nFrames; ++i) {
-            float ampf = g->synthetize() * 32768;
-            out[2 * i] = left * ampf;
-            out[2 * i + 1] = right * ampf;
+            //auto t1 = clck::now();
+            for (unsigned int j = 0; j < nchannels; ++j) {
+                if(w->m_mute->isChecked()) {
+                    out[i * nchannels + j] = 0;
+                }
+                else
+                    out[i * nchannels + j] = g->synthetize();
+                // pan...
+            }
+            //auto t2 = clck::now();
+            //std::cerr << "synth took " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " µs" << std::endl;
         }
     }
     return 0;

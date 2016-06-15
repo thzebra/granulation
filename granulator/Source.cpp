@@ -4,7 +4,7 @@ namespace Granulation {
 namespace Synthesis {
 
 Source::Source() {}
-Source::Source(SourceData *sd) {}
+Source::Source(SourceData *sd, int length) {}
 
 }
 }

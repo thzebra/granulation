@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
-#include <list>
+#include <deque>
 #include "Grain.hpp"
+#include "Essence.hpp"
 
 namespace Granulation {
 namespace Synthesis {
@@ -15,17 +16,22 @@ class Scheduler
 public:
     Scheduler();
     Scheduler(SequenceStrategy* strategy);
-    float synthetize();
-    void setStrategy(SequenceStrategy* strategy);
-    void addGrain(Envelope* e, Source* s);
-    void activateNext();
-    int grainCount() const;
-    void updateTime(double streamTime);
+    ~Scheduler();
+    virtual float synthetize();
+    virtual void setStrategy(SequenceStrategy* strategy);
+
+    virtual void addGrain(const Grain& g, int maxgrains);
+
+    virtual void activateNext();
+    virtual int grainCount() const;
+    virtual void updateTime(double streamTime);
+    virtual int maxDensity() const;
 
 private:
-    std::list<Grain> m_grains;
+    std::deque<Grain> m_grains;
     SequenceStrategy* m_strategy;
     void removeCompleted();
+    int m_actives{0};
 };
 
 }
