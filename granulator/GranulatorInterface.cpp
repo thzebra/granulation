@@ -3,6 +3,7 @@
 #include <rtaudio/RtAudio.h>
 #include <exception>
 #include <QMouseEvent>
+#include "FileSourceData.hpp"
 
 namespace Granulation {
 namespace Panel {
@@ -10,7 +11,7 @@ namespace Panel {
 GranulatorInterface::GranulatorInterface(QWidget *parent)
     : QMainWindow(parent),
       m_central{new QWidget},
-      m_button{new QPushButton("Generate!")},
+      m_capturebutton{new QPushButton(tr("Capture"))},
       m_label{new QLabel},
       m_layout{new QGridLayout},
       m_points{std::vector<QPoint> (0)},
@@ -26,9 +27,13 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_durationlabel{new QLabel},
       m_countlabel{new QLabel},
       m_density{new QSpinBox},
-      m_densitylabel{new QLabel}
+      m_densitylabel{new QLabel},
+      m_cleargrains{new QPushButton(tr("Clear grains"))},
+      m_sourcefile{new QLineEdit}
 {
     resize(600, 600);
+
+    m_capturebutton->setCheckable(true);
 
     m_grainCount->setMinimum(1);
     m_grainCount->setMaximum(1000);
@@ -45,19 +50,34 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_durationlabel->setText(tr("Grain duration"));
 
     m_density->setMinimum(1);
+    m_density->setMaximum(500);
     m_density->setValue(100);
     m_densitylabel->setText(tr("Number of grains per second"));
 
+    m_label->setText("No active grains");
+    m_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+
+    QString firstSample = tr("sample.wav");
+    m_sourcefile->setText(firstSample);
+
+    FileSourceData* fsd = new FileSourceData();
+    m_sourcedata = std::make_shared<FileSourceData> (*fsd);
+    setSourceData(m_sourcefile->text());
+
     m_layout->addWidget(m_drawingArea, 0, 0, 1, 2);
-    m_layout->addWidget(m_devices, 1, 0, 1, 2);
-    //m_layout->addWidget(m_button);
-    //m_layout->addWidget(m_label);
-    m_layout->addWidget(m_countlabel, 2, 0);
-    m_layout->addWidget(m_grainCount, 2, 1);
-    m_layout->addWidget(m_durationlabel, 3, 0);
-    m_layout->addWidget(m_grainDuration, 3, 1);
-    m_layout->addWidget(m_mutelabel, 4, 0);
-    m_layout->addWidget(m_mute, 4, 1);
+    m_layout->addWidget(m_label, 1, 0);
+    m_layout->addWidget(m_devices, 2, 0, 1, 2);
+    m_layout->addWidget(m_countlabel, 3, 0);
+    m_layout->addWidget(m_grainCount, 3, 1);
+    m_layout->addWidget(m_durationlabel, 4, 0);
+    m_layout->addWidget(m_grainDuration, 4, 1);
+    m_layout->addWidget(m_densitylabel, 5, 0);
+    m_layout->addWidget(m_density, 5, 1);
+    m_layout->addWidget(m_mutelabel, 6, 0);
+    m_layout->addWidget(m_mute, 6, 1);
+    m_layout->addWidget(m_capturebutton, 7, 0);
+    m_layout->addWidget(m_cleargrains, 7, 1);
+    m_layout->addWidget(m_sourcefile, 8, 0);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);
@@ -67,16 +87,34 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
             [=] (int d) mutable -> void { granulator->setEssenceDuration(d); });
     connect(m_grainCount, static_cast<void (QSpinBox::*)(int)> (&QSpinBox::valueChanged),
             [=] (int c) mutable -> void { granulator->setMaxGrains(c); });
+    connect(m_cleargrains,
+            &QPushButton::clicked,
+            [=] () mutable -> void { granulator->clearGrains();});
+    connect(m_sourcefile,
+            &QLineEdit::editingFinished,
+            [=] () mutable -> void { setSourceData(m_sourcefile->text()); });
+    connect(m_capturebutton,
+            &QPushButton::clicked,
+            [=] (bool checked) mutable -> void { toggleCapture(checked); });
 }
 
 GranulatorInterface::~GranulatorInterface()
 {
     delete m_devices;
-    delete m_button;
+    delete m_capturebutton;
     delete m_label;
     delete m_layout;
     delete m_central;
     delete granulator;
+    delete m_mute;
+    delete m_mutelabel;
+    delete m_drawingArea;
+    delete m_grainCount;
+    delete m_grainDuration;
+    delete m_density;
+    delete m_densitylabel;
+    delete m_countlabel;
+    delete m_durationlabel;
     m_points.~vector();
 }
 
@@ -90,6 +128,8 @@ void GranulatorInterface::addPoint(QMouseEvent *m) {
     if (m_nthpoint == 0)
         addPoint(m->pos());
     m_nthpoint = (m_nthpoint + 1) % 50;
+    int nactive = granulator->grainCount();
+    m_label->setText(QString::number(nactive) + tr(" active grains"));
 }
 
 void GranulatorInterface::updateLabel() {}
@@ -112,6 +152,40 @@ void GranulatorInterface::setPan(float p) {
 
 void GranulatorInterface::emptyPoints() {
     m_points.clear();
+}
+
+void GranulatorInterface::setSourceData(const QString& src) {
+    qDebug() << src;
+    m_sourcedata->setSource(src.toStdString());
+    if (granulator)
+        granulator->setEssenceData(m_sourcedata);
+}
+
+std::shared_ptr<SourceData> GranulatorInterface::sourceData() const {
+    return m_sourcedata;
+}
+
+void GranulatorInterface::openOutFile() {
+    m_outinfo.channels = granulator->channels();
+    m_outinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+    m_outinfo.samplerate = granulator->sampleRate();
+    m_outfile = sf_open("out_.wav", SFM_WRITE, &m_outinfo);
+}
+
+void GranulatorInterface::closeOutFile() {
+    if (m_outfile)
+        sf_close(m_outfile);
+}
+
+void GranulatorInterface::write(const float* ptr, int nframes) {
+    sf_writef_float(m_outfile, ptr, nframes);
+}
+
+void GranulatorInterface::toggleCapture(bool b) {
+    if (b)
+        openOutFile();
+    else
+        closeOutFile();
 }
 
 }

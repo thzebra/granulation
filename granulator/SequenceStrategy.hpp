@@ -7,6 +7,7 @@ class SequenceStrategy
 {
 public:
     SequenceStrategy();
+    virtual ~SequenceStrategy() = default;
 
     /**
      * @brief nextDuration
@@ -26,9 +27,8 @@ public:
      */
 
     virtual bool update(double streamTime) = 0;
-    virtual ~SequenceStrategy() = default;
-    virtual int maxDensity() const = 0;
     double totalTime() const;
+    virtual void setInteronset(int i);
 
 protected:
     SequenceStrategy(int interonset);

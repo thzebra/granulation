@@ -16,8 +16,8 @@ class Scheduler
 public:
     Scheduler();
     Scheduler(SequenceStrategy* strategy);
-    ~Scheduler();
-    virtual float synthetize();
+    virtual ~Scheduler();
+    virtual float synthetize(int maxgrains = 1);
     virtual void setStrategy(SequenceStrategy* strategy);
 
     virtual void addGrain(const Grain& g, int maxgrains);
@@ -25,7 +25,8 @@ public:
     virtual void activateNext();
     virtual int grainCount() const;
     virtual void updateTime(double streamTime);
-    virtual int maxDensity() const;
+    virtual void setInteronset(int i);
+    virtual void clearGrains();
 
 private:
     std::deque<Grain> m_grains;

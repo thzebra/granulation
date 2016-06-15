@@ -9,6 +9,7 @@ public:
     SinusoidalEnvelope();
     SinusoidalEnvelope(int length);
     void fill() override;
+    ~SinusoidalEnvelope() = default;
 };
 
 }

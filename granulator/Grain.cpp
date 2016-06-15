@@ -61,17 +61,20 @@ void Grain::activate(int duration) {
 }
 
 float Grain::synthetize() {
-    if (m_index * m_source->channels() + m_channelindex >= m_source->size() || m_index < 0) {
+    int nc = m_source->channels();
+    int srcs = m_source->size();
+    if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
         m_index = 0;
         m_channelindex = 0;
     }
 
-    int idx = m_index * m_source->channels();
+    int idx = m_index * nc + m_channelindex;
     if (m_readBackwards)
-        idx = m_source->size() - 1 - idx;
-    m_channelindex = (m_channelindex + 1) % m_source->channels();
+        idx = srcs - 1 - idx;
+    m_channelindex = (m_channelindex + 1) % nc;
     if (m_channelindex == 0)
         ++m_index;
+    //qDebug() << idx << m_index;
     return m_source->data(idx) * m_envelope->data(m_index);
 }
 

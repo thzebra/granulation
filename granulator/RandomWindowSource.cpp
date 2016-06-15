@@ -8,16 +8,18 @@ namespace Synthesis {
 
 RandomWindowSource::RandomWindowSource() {}
 RandomWindowSource::RandomWindowSource(std::shared_ptr<SourceData> source, int length) :
-    m_data(std::vector<float> (length, 0.f)),
     m_rawdata{source}
 {
     if (source) {
+        int nsamples = length * source->channels();
+        m_data.resize(nsamples);
         std::srand(time(nullptr));
         int datasize = (int) source->size();
         if (datasize > 0) {
             int begin = std::rand() % datasize;
             //qDebug() << "first sample at" << begin << "out of" << source->size();
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < nsamples; ++i) {
+
                 int idx = (begin + i) % datasize;
                 m_data[i] = source->data(idx);
             }

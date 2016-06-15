@@ -17,13 +17,11 @@ public:
 
     RegularSequenceStrategy(int density, int length = 1);
 
-    virtual int nextDuration();
-    virtual int nextOnset();
-    virtual bool update(double streamTime);
-    virtual int maxDensity() const override;
+    int nextDuration() override;
+    int nextOnset() override;
+    bool update(double streamTime) override;
 
 private:
-    int m_density; // number of grain onsets per second
     int m_length; // length of each grain in ms
 };
 

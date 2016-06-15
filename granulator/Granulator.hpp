@@ -24,7 +24,7 @@ public:
     }
 
     virtual float synthetize() override {
-        return m_scheduler.synthetize();
+        return m_scheduler.synthetize(m_maxgrains);
     }
 
     virtual void generate(int n) override {
@@ -41,8 +41,8 @@ public:
         return m_essence.channels();
     }
 
-    virtual int maxDensity() const override {
-        return m_scheduler.maxDensity();
+    virtual int maxGrains() const override {
+        return m_maxgrains;
     }
 
     virtual void updateTime(double streamTime) override {
@@ -57,13 +57,26 @@ public:
         m_essence.setDuration(duration);
     }
 
-    void setEssenceData(SourceData& sd) override {
-
+    void setEssenceData(std::shared_ptr<SourceData> sd) override {
+        Essence<Env, Src> ess (sd, m_essence.grainDuration());
+        m_essence = ess;
     }
 
     void setMaxGrains(int m) {
         if (m > 0)
             m_maxgrains = m;
+    }
+
+    int grainCount() const {
+        return m_scheduler.grainCount();
+    }
+
+    void setInteronset(int i) override {
+        m_scheduler.setInteronset(i);
+    }
+
+    void clearGrains() override {
+        m_scheduler.clearGrains();
     }
 
 private:

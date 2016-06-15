@@ -7,7 +7,7 @@ namespace Synthesis {
 
 DummyScheduler::DummyScheduler() : index(0) {}
 
-float DummyScheduler::synthetize() {
+float DummyScheduler::synthetize(int maxgrains) {
     //qDebug() << "plop" << index;
     return sin(2.f * M_PI * index++ * 440.f / 48000.f);
 }

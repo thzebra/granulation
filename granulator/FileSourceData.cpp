@@ -17,6 +17,7 @@ void FileSourceData::populate() {
     info.format = 0;
     SNDFILE* file = sf_open(m_filename.c_str(), SFM_READ, &info);
     if (file) {
+        std::cout << info.format << std::endl;
         m_sampleRate = info.samplerate;
         m_channels = info.channels;
         m_data.resize(info.frames * info.channels);
@@ -28,7 +29,7 @@ void FileSourceData::populate() {
             }
         }
 
-        std::cout << "sr: " << m_sampleRate;
+        std::cout << "sr: " << m_sampleRate << std::endl;
 
         sf_close(file);
     }

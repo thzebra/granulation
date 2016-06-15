@@ -17,12 +17,15 @@ public:
     virtual int sampleRate() const = 0;
     virtual int channels() const = 0;
     virtual void updateTime(double streamTime) = 0;
-    virtual int maxDensity() const = 0;
+    virtual int maxGrains() const = 0;
 
     virtual void setEssenceDuration(int duration) = 0;
-    virtual void setEssenceData(SourceData& sd) = 0;
+    virtual void setEssenceData(std::shared_ptr<SourceData> sd) = 0;
 
     virtual void setMaxGrains(int m) = 0;
+    virtual int grainCount() const = 0;
+    virtual void setInteronset(int i) = 0;
+    virtual void clearGrains() = 0;
 
     unsigned int bufferFrames{512};
 };

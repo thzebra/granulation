@@ -11,11 +11,11 @@ class RandomWindowSource : public Source {
 public:
     RandomWindowSource();
     RandomWindowSource(std::shared_ptr<SourceData> source, int length);
-    virtual const unsigned int size() const override;
-    virtual float data(int i) const override;
-    virtual int sampleRate() const override;
-    virtual int channels() const override;
-    virtual SourceData& rawData() const override;
+    const unsigned int size() const override;
+    float data(int i) const override;
+    int sampleRate() const override;
+    int channels() const override;
+    SourceData& rawData() const override;
 
 private:
     std::vector<float> m_data;

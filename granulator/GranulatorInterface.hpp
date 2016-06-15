@@ -12,6 +12,9 @@
 #include "Source.hpp"
 #include <QSpinBox>
 #include <QCheckBox>
+#include <QLineEdit>
+#include <memory>
+#include <sndfile.hh>
 
 namespace Granulation {
 namespace Panel {
@@ -26,7 +29,7 @@ public:
     GranulatorInterface(QWidget *parent = 0);
     ~GranulatorInterface();
 
-    QPushButton* m_button{};
+    QPushButton* m_capturebutton{};
     QLabel* m_label{};
     QGridLayout* m_layout{};
     QWidget* m_central{};
@@ -46,9 +49,18 @@ public:
     QLabel* m_densitylabel{};
     QSpinBox* m_density{};
 
+    QPushButton* m_cleargrains{};
+
+    QLineEdit* m_sourcefile{};
+
+
+
     float pan();
     void setPan(float p);
     void addPoint(QPoint);
+    void setSourceData(const QString& src);
+    std::shared_ptr<SourceData> sourceData() const;
+    void write(const float* ptr, int nframes = 512);
 
 public slots:
     void updateLabel();
@@ -60,9 +72,17 @@ private:
     const unsigned int m_maxpoints;
     float m_pan {0.f};
     int m_nthpoint;
+    std::shared_ptr<SourceData> m_sourcedata;
 
     int m_maxgrains{1};
     int m_duration{10};
+
+    SNDFILE* m_outfile{};
+    SF_INFO m_outinfo{};
+
+    void openOutFile();
+    void closeOutFile();
+    void toggleCapture(bool b = false);
 };
 
 }

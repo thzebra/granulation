@@ -13,6 +13,8 @@
 #include "FileSourceData.hpp"
 #include "Essence.hpp"
 #include <chrono>
+#include <sndfile.hh>
+
 using namespace Granulation;
 using namespace Synthesis;
 
@@ -21,31 +23,12 @@ void setupStream(int dev, Panel::GranulatorInterface* w, RtAudio* api, RtAudioCa
 int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             double streamTime, RtAudioStreamStatus status, void *userData);
 QString format2QString(const RtAudioFormat& f);
+int outindex = 0;
 
 int main(int argc, char *argv[])
 {
     RtAudio* api = new RtAudio ();
     unsigned int bufferframes = 0;
-
-    FileSourceData filedata = FileSourceData();
-    filedata.setSource("sample.wav");
-
-    int grainDuration = 700; // duration in ms
-    int density = 100; // grains per second
-
-    //qDebug() << filedata.channels();
-
-    RegularSequenceStrategy* strat = new RegularSequenceStrategy(density, grainDuration);
-
-    //    using clck = std::chrono::high_resolution_clock;
-
-    //    auto t1 = clck::now();
-    auto g = new Granulator<SinusoidalEnvelope, RandomWindowSource> (std::make_shared<FileSourceData> (filedata), grainDuration);
-    g->setStrategy(strat);
-    //g->generate(100);
-
-    //    auto t2 = clck::now();
-    //    std::cerr << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
     QApplication application(argc, argv);
     Panel::GranulatorInterface* w = new Panel::GranulatorInterface ();
@@ -54,7 +37,10 @@ int main(int argc, char *argv[])
     for (unsigned int i = 0; i < ndev; ++i) {
         w->m_devices->addItem(QString(api->getDeviceInfo(i).name.c_str()));
     }
-    w->granulator = g;
+    w->granulator = new Granulator<SinusoidalEnvelope, RandomWindowSource> (w->sourceData(), w->m_grainDuration->value());
+    RegularSequenceStrategy strat = RegularSequenceStrategy (w->m_density->value(), w->m_grainDuration->value());
+    w->granulator->setStrategy(&strat);
+    w->granulator->setMaxGrains(w->m_grainCount->value());
 
     setupStream(0, w, api, output, &bufferframes);
 
@@ -141,14 +127,9 @@ void setupStream(int device, Panel::GranulatorInterface* w, RtAudio* api, RtAudi
             else
                 bfptr = &(g->bufferFrames);
 
-            //qDebug() << *bfptr;
-
-
             api->openStream(&par, nullptr, (unsigned int)format, g->sampleRate(), bfptr, callback, (void*)w, &options);
-            //api->openStream(&par, nullptr, (unsigned int) format, 48000, intptr, callback, (void*)w, &options);
-            /*qDebug() << "Stream was successfully set up for device" << devinfo.name.c_str() << "with"
-                     << par.nChannels << "channels, format" << format2QString(format) << "sample rate" << g->sampleRate() << "and" << *bfptr << "buffer frames";*/
             api->startStream();
+            qDebug() << options.numberOfBuffers;
         }
         catch (RtAudioError re) {
             qDebug() << "Error type" << typeToQString(re.getType()) << ":" << re.getMessage().c_str();
@@ -167,27 +148,30 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
 
     Panel::GranulatorInterface* w = (Panel::GranulatorInterface*) userData;
     auto g = w->granulator;
-//    qDebug() << streamTime << "seconds elapsed since beginning";
 
     using clck = std::chrono::high_resolution_clock;
     if (g) {
-        float * out = (float*) outputBuffer;
+        float* out = (float*) outputBuffer;
 
         g->updateTime(streamTime);
-
         unsigned int nchannels = g->channels();
+
+        if (w->m_mute->isChecked()) {
+            int imax = nchannels * nFrames;
+            for (int i = 0; i < imax; ++i)
+                out[i] = 0;
+            return 0;
+        }
+
+        int size = w->sourceData()->size();
         for (unsigned int i = 0; i < nFrames; ++i) {
-            //auto t1 = clck::now();
             for (unsigned int j = 0; j < nchannels; ++j) {
-                if(w->m_mute->isChecked()) {
-                    out[i * nchannels + j] = 0;
-                }
-                else
-                    out[i * nchannels + j] = g->synthetize();
-                // pan...
+                //out[i * nchannels + j] = w->sourceData()->data((outindex * 1024 + i * nchannels + j) % size);
+                out[i * nchannels + j] = g->synthetize();
             }
-            //auto t2 = clck::now();
-            //std::cerr << "synth took " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " µs" << std::endl;
+        }
+        if (w->m_capturebutton->isChecked()) {
+            w->write(out, nFrames);
         }
     }
     return 0;
