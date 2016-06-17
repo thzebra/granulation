@@ -4,6 +4,7 @@ project(granulator LANGUAGES CXX)
 set(EXECNAME granulator)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 find_package(Qt5 5.3 REQUIRED COMPONENTS Core Widgets Multimedia)
 

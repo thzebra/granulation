@@ -29,7 +29,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_density{new QSpinBox},
       m_densitylabel{new QLabel},
       m_cleargrains{new QPushButton(tr("Clear grains"))},
-      m_sourcefile{new QLineEdit}
+      m_sourcefilename{new QLineEdit},
+      m_outfilename{new QLineEdit}
 {
     resize(600, 600);
 
@@ -58,11 +59,13 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
     QString firstSample = tr("sample.wav");
-    m_sourcefile->setText(firstSample);
+    m_sourcefilename->setText(firstSample);
 
     FileSourceData* fsd = new FileSourceData();
     m_sourcedata = std::make_shared<FileSourceData> (*fsd);
-    setSourceData(m_sourcefile->text());
+    setSourceData(m_sourcefilename->text());
+
+    m_outfilename->setText(tr("out.wav"));
 
     m_layout->addWidget(m_drawingArea, 0, 0, 1, 2);
     m_layout->addWidget(m_label, 1, 0);
@@ -77,7 +80,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_layout->addWidget(m_mute, 6, 1);
     m_layout->addWidget(m_capturebutton, 7, 0);
     m_layout->addWidget(m_cleargrains, 7, 1);
-    m_layout->addWidget(m_sourcefile, 8, 0);
+    m_layout->addWidget(m_sourcefilename, 8, 0);
+    m_layout->addWidget(m_outfilename, 9, 0);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);
@@ -89,10 +93,10 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
             [=] (int c) mutable -> void { granulator->setMaxGrains(c); });
     connect(m_cleargrains,
             &QPushButton::clicked,
-            [=] () mutable -> void { granulator->clearGrains();});
-    connect(m_sourcefile,
+            [=] () mutable -> void { granulator->clearGrains(); m_label->setText(tr("No active grains"));});
+    connect(m_sourcefilename,
             &QLineEdit::editingFinished,
-            [=] () mutable -> void { setSourceData(m_sourcefile->text()); });
+            [=] () mutable -> void { setSourceData(m_sourcefilename->text()); });
     connect(m_capturebutton,
             &QPushButton::clicked,
             [=] (bool checked) mutable -> void { toggleCapture(checked); });
@@ -169,7 +173,10 @@ void GranulatorInterface::openOutFile() {
     m_outinfo.channels = granulator->channels();
     m_outinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
     m_outinfo.samplerate = granulator->sampleRate();
-    m_outfile = sf_open("out_.wav", SFM_WRITE, &m_outinfo);
+    std::string outstr = m_outfilename->text().toStdString();
+    if (outstr.compare(std::string ()))
+        outstr = "out.wav";
+    m_outfile = sf_open(outstr.c_str(), SFM_WRITE, &m_outinfo);
 }
 
 void GranulatorInterface::closeOutFile() {

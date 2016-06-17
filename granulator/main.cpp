@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
     QWidget::connect(&application, &QApplication::aboutToQuit, [=] () { delete api; });
 
-    return application.exec();
+        return application.exec();
 }
 
 QString typeToQString(const RtAudioError::Type t) {

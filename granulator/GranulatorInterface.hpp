@@ -51,7 +51,8 @@ public:
 
     QPushButton* m_cleargrains{};
 
-    QLineEdit* m_sourcefile{};
+    QLineEdit* m_sourcefilename{};
+    QLineEdit* m_outfilename{};
 
 
 

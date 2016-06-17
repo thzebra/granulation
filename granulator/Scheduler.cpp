@@ -19,7 +19,12 @@ Scheduler::~Scheduler() {
 }
 
 float Scheduler::synthetize(int maxgrains) {
-    if (m_grains.size() == 0)
+    while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
+        m_grains.pop_front();
+        --m_actives;
+    }
+
+    if (m_grains.size() == 0 || maxgrains <= 0)
         return 0.f;
 
     int nactive = 0;
@@ -36,10 +41,8 @@ float Scheduler::synthetize(int maxgrains) {
             }
         }
     }
-    //removeCompleted();
-    if (nactive)
-    if (amp < 0)
-        return amp / maxgrains;
+    // qDebug() << "SCHEDULER GOT AMPLITUDE" << amp;
+    return amp / maxgrains;
 }
 
 void Scheduler::setStrategy(SequenceStrategy *strategy) {
@@ -47,8 +50,12 @@ void Scheduler::setStrategy(SequenceStrategy *strategy) {
 }
 
 void Scheduler::addGrain(const Grain& g, int maxgrains) {
-    while (m_grains.size() >= maxgrains)
-        m_grains.pop_front();
+    int toMark = std::max(int(m_grains.size() - maxgrains), 0);
+    int nth = 0;
+    for (auto it = m_grains.begin(); it != m_grains.end() && nth < toMark; ++it) {
+        ++nth;
+        it->markRemove();
+    }
     m_grains.push_back(g);
 }
 

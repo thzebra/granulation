@@ -74,8 +74,11 @@ float Grain::synthetize() {
     m_channelindex = (m_channelindex + 1) % nc;
     if (m_channelindex == 0)
         ++m_index;
-    //qDebug() << idx << m_index;
-    return m_source->data(idx) * m_envelope->data(m_index);
+    float src = m_source->data(idx);
+    float env = m_envelope->data(m_index);
+    float res = src * env;
+    // qDebug() << idx << m_index << src << "*" << env << "=" << res;
+    return res;
 }
 
 bool Grain::isActive() const {
@@ -102,6 +105,14 @@ std::string Grain::grainToString() const {
     str.copy(cstr, length, 0);
     cstr[length] = 0;
     return std::string(cstr);
+}
+
+void Grain::markRemove() {
+    m_toRemove = true;
+}
+
+bool Grain::toRemove() const {
+    return m_toRemove;
 }
 
 }

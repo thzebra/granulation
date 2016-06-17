@@ -21,6 +21,8 @@ public:
     bool isReadBackwards() const;
     void operator=(const Grain&);
     std::string grainToString() const;
+    void markRemove();
+    bool toRemove() const;
 
 private:
     std::shared_ptr<Envelope> m_envelope;
@@ -31,6 +33,7 @@ private:
     bool m_active {false};
     bool m_readBackwards {false};
     bool m_completed {false};
+    bool m_toRemove{false};
 };
 
 

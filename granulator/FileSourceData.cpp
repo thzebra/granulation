@@ -30,7 +30,6 @@ void FileSourceData::populate() {
         }
 
         std::cout << "sr: " << m_sampleRate << std::endl;
-
         sf_close(file);
     }
     else {
