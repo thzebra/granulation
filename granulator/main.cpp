@@ -156,15 +156,15 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
 
         g->updateTime(streamTime);
         unsigned int nchannels = g->channels();
+        int imax = nchannels * nFrames;
 
         if (w->m_mute->isChecked()) {
-            int imax = nchannels * nFrames;
             for (int i = 0; i < imax; ++i)
                 out[i] = 0;
             return 0;
         }
 
-        g->synthetize(gsl::span<float>{out, nFrames * nchannels});
+        g->synthetize(gsl::span<float>{out, imax});
 
         if (w->m_capturebutton->isChecked()) {
             w->write(out, nFrames);

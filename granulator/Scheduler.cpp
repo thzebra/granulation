@@ -80,7 +80,7 @@ void Scheduler::synthetize(gsl::span<float> vec, int maxgrains) {
     {
         max = std::max(vec[i], max);
     }
-    float factor = 1. / max;
+    const float factor = 1. / max;
     for(int i = 0; i < vec_size; i++)
     {
         vec[i] *= factor;

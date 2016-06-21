@@ -92,26 +92,73 @@ void Grain::synthetize(gsl::span<float> vec) {
     // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
     // on les charge une fois au début
     const Source& source = *m_source;
-    const Envelope& envelope = *m_envelope;
+    const auto& envelope = m_envelope->data();
+
     const int nc = m_sourceChannels;
     const int srcs = m_sourceSize;
 
     const int inputSize = vec.size();
-    for(int i = 0; i < inputSize; i++)
+
+    auto fast_data = source.data();
+    if(fast_data.empty())
     {
-        if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
-            m_index = 0;
-            m_channelindex = 0;
+        for(int i = 0; i < inputSize; i++)
+        {
+            if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
+                m_index = 0;
+                m_channelindex = 0;
+            }
+
+            int idx = m_index * nc + m_channelindex;
+            if (m_readBackwards)
+                idx = srcs - 1 - idx;
+            m_channelindex = (m_channelindex + 1) % nc;
+            if (m_channelindex == 0)
+                ++m_index;
+
+            vec[i] += source.data(idx) * envelope[m_envelopeIndex++ % m_envelopeSize];
         }
+    }
+    else
+    {
+        if(!m_readBackwards)
+        {
+            // This should be the most taken branch
+            for(int i = 0; i < inputSize; i++)
+            {
+                if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
+                    m_index = 0;
+                    m_channelindex = 0;
+                }
 
-        int idx = m_index * nc + m_channelindex;
-        if (m_readBackwards)
-            idx = srcs - 1 - idx;
-        m_channelindex = (m_channelindex + 1) % nc;
-        if (m_channelindex == 0)
-            ++m_index;
+                int idx = m_index * nc + m_channelindex;
 
-        vec[i] += source.data(idx) * envelope.data(m_envelopeIndex++ % m_envelopeSize);
+                m_channelindex = (m_channelindex + 1) % nc;
+                if (m_channelindex == 0)
+                    ++m_index;
+
+                vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+            }
+        }
+        else
+        {
+            for(int i = 0; i < inputSize; i++)
+            {
+                if (m_index * nc + m_channelindex >= srcs || m_index < 0)
+                {
+                    m_index = 0;
+                    m_channelindex = 0;
+                }
+
+                int idx = srcs - 1 - (m_index * nc + m_channelindex);
+
+                m_channelindex = (m_channelindex + 1) % nc;
+                if (m_channelindex == 0)
+                    ++m_index;
+
+                vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+            }
+        }
     }
 }
 

@@ -17,6 +17,10 @@ public:
     float data(int i) const override {
         return m_data[i];
     }
+
+    gsl::span<const float> data() const override {
+        return m_data;
+    }
     int sampleRate() const override {
         return m_rawdata->sampleRate();
     }
@@ -33,6 +37,36 @@ private:
     std::shared_ptr<SourceData> m_rawdata;
 };
 
+
+class RandomWindowSourceView final: public Source {
+public:
+    RandomWindowSourceView();
+    RandomWindowSourceView(std::shared_ptr<SourceData> source, int length);
+    const unsigned int size() const override {
+        return m_data.size();
+    }
+    float data(int i) const override {
+        return m_data[i];
+    }
+
+    gsl::span<const float> data() const override {
+        return m_data;
+    }
+    int sampleRate() const override {
+        return m_rawdata->sampleRate();
+    }
+    int channels() const override {
+        return m_rawdata->channels();
+    }
+    SourceData& rawData() const override {
+        if (m_rawdata)
+            return *m_rawdata;
+    }
+
+private:
+    std::vector<float> m_data;
+    std::shared_ptr<SourceData> m_rawdata;
+};
 
 }
 }

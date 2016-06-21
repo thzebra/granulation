@@ -1,5 +1,6 @@
 #pragma once
 #include "SourceData.hpp"
+#include <span.h>
 
 namespace Granulation {
 namespace Synthesis {
@@ -14,6 +15,9 @@ public:
     virtual int sampleRate() const = 0;
     virtual int channels() const = 0;
     virtual SourceData& rawData() const = 0;
+
+    // Empty span means that the data has to be queried float by float
+    virtual gsl::span<const float> data() const { return {}; }
 
     virtual ~Source() = default;
 };
