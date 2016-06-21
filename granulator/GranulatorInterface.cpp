@@ -119,7 +119,6 @@ GranulatorInterface::~GranulatorInterface()
     delete m_densitylabel;
     delete m_countlabel;
     delete m_durationlabel;
-    m_points.~vector();
 }
 
 void GranulatorInterface::addPoint(QPoint p) {
@@ -129,11 +128,16 @@ void GranulatorInterface::addPoint(QPoint p) {
 }
 
 void GranulatorInterface::addPoint(QMouseEvent *m) {
+    addPoint(m->pos());
+    int nactive = granulator->grainCount();
+    m_label->setText(QString::number(nactive) + tr(" active grains"));
+    /*
     if (m_nthpoint == 0)
         addPoint(m->pos());
     m_nthpoint = (m_nthpoint + 1) % 50;
     int nactive = granulator->grainCount();
     m_label->setText(QString::number(nactive) + tr(" active grains"));
+    */
 }
 
 void GranulatorInterface::updateLabel() {}

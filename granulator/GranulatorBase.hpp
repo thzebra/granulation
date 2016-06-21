@@ -13,6 +13,7 @@ public:
 
     virtual void setStrategy(SequenceStrategy* strategy) = 0;
     virtual float synthetize() = 0;
+    virtual void synthetize(std::vector<float>& vec) = 0;
     virtual void generate(int n) = 0;
     virtual int sampleRate() const = 0;
     virtual int channels() const = 0;

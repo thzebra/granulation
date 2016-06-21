@@ -28,26 +28,15 @@ RandomWindowSource::RandomWindowSource(std::shared_ptr<SourceData> source, int l
     }
 }
 
-const unsigned int RandomWindowSource::size() const {
-    return m_data.size();
-}
 
-float RandomWindowSource::data(int i) const {
-    return m_data[i];
-}
 
-int RandomWindowSource::sampleRate() const {
-    return m_rawdata->sampleRate();
-}
 
-int RandomWindowSource::channels() const {
-    return m_rawdata->channels();
-}
 
-SourceData& RandomWindowSource::rawData() const {
-    if (m_rawdata)
-        return *m_rawdata;
-}
+
+
+
+
+
 
 }
 }

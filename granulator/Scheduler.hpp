@@ -3,6 +3,7 @@
 #include <deque>
 #include "Grain.hpp"
 #include "Essence.hpp"
+#include <mutex>
 
 namespace Granulation {
 namespace Synthesis {
@@ -18,6 +19,7 @@ public:
     Scheduler(SequenceStrategy* strategy);
     virtual ~Scheduler();
     virtual float synthetize(int maxgrains = 1);
+    virtual void synthetize(std::vector<float>& vec, int maxgrains);
     virtual void setStrategy(SequenceStrategy* strategy);
 
     virtual void addGrain(const Grain& g, int maxgrains);
@@ -29,6 +31,7 @@ public:
     virtual void clearGrains();
 
 private:
+    mutable std::mutex m_grainsLock;
     std::deque<Grain> m_grains;
     SequenceStrategy* m_strategy;
     void removeCompleted();

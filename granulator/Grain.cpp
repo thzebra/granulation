@@ -12,7 +12,6 @@ Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s) :
     m_source{s},
     m_envelope{e}
 {
-
 }
 
 Grain::Grain(const Grain & grain) :
@@ -24,17 +23,22 @@ Grain::Grain(const Grain & grain) :
     m_completed{grain.m_completed}
     //m_duration{grain.m_duration}
 {
-
 }
 
 void Grain::operator =(const Grain& grain) {
+
+    m_source = grain.m_source;
+    m_envelope = grain.m_envelope;
+
+    m_sourceChannels = grain.m_sourceChannels;
+    m_sourceSize = grain.m_sourceSize;
+    m_envelopeSize = grain.m_envelopeSize;
+
     m_active = grain.m_active;
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
     //m_duration = grain.m_duration;
     m_index = grain.m_index;
-    m_source = grain.m_source;
-    m_envelope = grain.m_envelope;
 }
 
 bool Grain::completed() const {
@@ -61,8 +65,13 @@ void Grain::activate(int duration) {
 }
 
 float Grain::synthetize() {
-    int nc = m_source->channels();
-    int srcs = m_source->size();
+    // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
+    // on les charge une fois au début
+    const Source& source = *m_source;
+    const Envelope& envelope = *m_envelope;
+    const int nc = m_sourceChannels;
+    const int srcs = m_sourceSize;
+
     if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
         m_index = 0;
         m_channelindex = 0;
@@ -74,11 +83,36 @@ float Grain::synthetize() {
     m_channelindex = (m_channelindex + 1) % nc;
     if (m_channelindex == 0)
         ++m_index;
-    float src = m_source->data(idx);
-    float env = m_envelope->data(m_index);
-    float res = src * env;
-    // qDebug() << idx << m_index << src << "*" << env << "=" << res;
-    return res;
+
+    return source.data(idx) * envelope.data(m_envelopeIndex++ % m_envelopeSize);
+}
+
+
+void Grain::synthetize(std::vector<float>& vec) {
+    // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
+    // on les charge une fois au début
+    const Source& source = *m_source;
+    const Envelope& envelope = *m_envelope;
+    const int nc = m_sourceChannels;
+    const int srcs = m_sourceSize;
+
+    const int inputSize = vec.size();
+    for(int i = 0; i < inputSize; i++)
+    {
+        if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
+            m_index = 0;
+            m_channelindex = 0;
+        }
+
+        int idx = m_index * nc + m_channelindex;
+        if (m_readBackwards)
+            idx = srcs - 1 - idx;
+        m_channelindex = (m_channelindex + 1) % nc;
+        if (m_channelindex == 0)
+            ++m_index;
+
+        vec[i] += source.data(idx) * envelope.data(m_envelopeIndex++ % m_envelopeSize);
+    }
 }
 
 bool Grain::isActive() const {

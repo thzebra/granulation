@@ -19,6 +19,8 @@ Scheduler::~Scheduler() {
 }
 
 float Scheduler::synthetize(int maxgrains) {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
+
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
         m_grains.pop_front();
         --m_actives;
@@ -30,26 +32,63 @@ float Scheduler::synthetize(int maxgrains) {
     int nactive = 0;
     int ncompleted = 0;
     float amp = 0.f;
-    std::deque<Grain>::iterator it;
-    for (it = m_grains.begin(); it != m_grains.end(); ++it) {
-        if (it->isActive() && !it->completed()) {
-            amp += it->synthetize();
+
+    for(Grain& grain : m_grains)
+    {
+        if (grain.isActive() && !grain.completed()) {
+            amp += grain.synthetize();
             ++nactive;
-            if (it->completed()) {
+            if (grain.completed()) {
                 ++ncompleted;
                 --m_actives;
             }
         }
     }
     // qDebug() << "SCHEDULER GOT AMPLITUDE" << amp;
-    return amp / maxgrains;
+    return amp / (nactive > 0 ? nactive : maxgrains);
 }
 
+
+
+void Scheduler::synthetize(std::vector<float>& vec, int maxgrains) {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
+
+    while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
+        m_grains.pop_front();
+        --m_actives;
+    }
+
+    if (m_grains.size() == 0 || maxgrains <= 0)
+        return;
+
+    int nactive = 0;
+    int ncompleted = 0;
+
+    for(Grain& grain : m_grains)
+    {
+        if (grain.isActive() && !grain.completed()) {
+            grain.synthetize(vec); // The grain mixes itself.
+            ++nactive;
+            if (grain.completed()) {
+                ++ncompleted;
+                --m_actives;
+            }
+        }
+    }
+
+    float factor = 1.f / (nactive > 0 ? nactive : maxgrains);
+    int vec_size = vec.size();
+    for(int i = 0; i < vec_size; i++)
+    {
+        vec[i] *= factor;
+    }
+}
 void Scheduler::setStrategy(SequenceStrategy *strategy) {
     m_strategy = strategy;
 }
 
 void Scheduler::addGrain(const Grain& g, int maxgrains) {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
     int toMark = std::max(int(m_grains.size() - maxgrains), 0);
     int nth = 0;
     for (auto it = m_grains.begin(); it != m_grains.end() && nth < toMark; ++it) {
@@ -60,6 +99,7 @@ void Scheduler::addGrain(const Grain& g, int maxgrains) {
 }
 
 void Scheduler::activateNext() {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
     auto it = m_grains.begin();
     for (; it != m_grains.end() && it->isActive(); ++it) {}
     if (it != m_grains.end()) {
@@ -71,12 +111,15 @@ void Scheduler::activateNext() {
 void Scheduler::removeCompleted() {}
 
 int Scheduler::grainCount() const {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
     return m_grains.size();
 }
 
 void Scheduler::updateTime(double streamTime) {
-    if (m_grains.size() > 0 && m_strategy->update(streamTime))
+    if (grainCount() > 0 && m_strategy->update(streamTime))
+    {
         activateNext();
+    }
 }
 
 void Scheduler::setInteronset(int i) {
@@ -84,6 +127,7 @@ void Scheduler::setInteronset(int i) {
 }
 
 void Scheduler::clearGrains() {
+    std::lock_guard<std::mutex> lock(m_grainsLock);
     m_grains.clear();
 }
 
