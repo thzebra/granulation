@@ -88,7 +88,7 @@ float Grain::synthetize() {
 }
 
 
-void Grain::synthetize(std::vector<float>& vec) {
+void Grain::synthetize(gsl::span<float> vec) {
     // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
     // on les charge une fois au début
     const Source& source = *m_source;

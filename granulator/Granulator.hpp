@@ -4,6 +4,8 @@
 #include "GranulatorBase.hpp"
 #include "DummyScheduler.hpp"
 
+#include <span.h>
+
 namespace Granulation {
 namespace Synthesis {
 
@@ -27,7 +29,7 @@ public:
         return m_scheduler.synthetize(m_maxgrains);
     }
 
-    virtual void synthetize(std::vector<float>& vec) override {
+    virtual void synthetize(gsl::span<float> vec) override {
         m_scheduler.synthetize(vec, m_maxgrains);
     }
     virtual void generate(int n) override {

@@ -48,9 +48,7 @@ float Scheduler::synthetize(int maxgrains) {
     return amp / (nactive > 0 ? nactive : maxgrains);
 }
 
-
-
-void Scheduler::synthetize(std::vector<float>& vec, int maxgrains) {
+void Scheduler::synthetize(gsl::span<float> vec, int maxgrains) {
     std::lock_guard<std::mutex> lock(m_grainsLock);
 
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
@@ -76,8 +74,13 @@ void Scheduler::synthetize(std::vector<float>& vec, int maxgrains) {
         }
     }
 
-    float factor = 1.f / (nactive > 0 ? nactive : maxgrains);
-    int vec_size = vec.size();
+    const int vec_size = vec.size();
+    float max = 0;
+    for(int i = 0; i < vec_size; i++)
+    {
+        max = std::max(vec[i], max);
+    }
+    float factor = 1. / max;
     for(int i = 0; i < vec_size; i++)
     {
         vec[i] *= factor;

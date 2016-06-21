@@ -3,6 +3,7 @@
 #include "Source.hpp"
 #include <string>
 #include <memory>
+#include <span.h>
 
 namespace Granulation {
 namespace Synthesis {
@@ -17,7 +18,7 @@ public:
     bool completed() const;
     void activate(int duration);
     float synthetize();
-    void synthetize(std::vector<float>& vec);
+    void synthetize(gsl::span<float> vec);
     bool isActive() const;
     bool isReadBackwards() const;
     void operator=(const Grain&);

@@ -164,20 +164,8 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             return 0;
         }
 
-        std::vector<float> v;
-        v.resize(nFrames * nchannels);
-        g->synthetize(v);
-        std::copy(v.begin(), v.end(), out);
-        /*
-        for (int i = 0; i < nFrames; ++i)
-        {
-            int c1 = i * nchannels;
-            for (int j = 0; j < nchannels; ++j)
-            {
-                out[c1 + j] = g->synthetize();
-            }
-        }
-        */
+        g->synthetize(gsl::span<float>{out, nFrames * nchannels});
+
         if (w->m_capturebutton->isChecked()) {
             w->write(out, nFrames);
         }

@@ -55,3 +55,4 @@ set (SOURCES
 add_executable(${EXECNAME} ${HEADERS} ${SOURCES})
 # target_compile_options(${EXECNAME} PUBLIC -Og)
 target_link_libraries(${EXECNAME} PUBLIC Qt5::Core Qt5::Widgets Qt5::Multimedia m rtaudio sndfile)
+target_include_directories(${EXECNAME} PUBLIC GSL/include)
