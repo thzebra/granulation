@@ -41,7 +41,6 @@ float Scheduler::synthetize(int maxgrains) {
             }
         }
     }
-    // qDebug() << "SCHEDULER GOT AMPLITUDE" << amp;
     return amp / maxgrains;
 }
 
@@ -50,7 +49,7 @@ void Scheduler::setStrategy(SequenceStrategy *strategy) {
 }
 
 void Scheduler::addGrain(const Grain& g, int maxgrains) {
-    int toMark = std::max(int(m_grains.size() - maxgrains), 0);
+    int toMark = std::max(int(m_grains.size() - maxgrains + 1), 0);
     int nth = 0;
     for (auto it = m_grains.begin(); it != m_grains.end() && nth < toMark; ++it) {
         ++nth;
