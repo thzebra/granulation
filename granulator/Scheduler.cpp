@@ -44,12 +44,8 @@ float Scheduler::synthetize(int maxgrains) {
             }
         }
     }
-<<<<<<< HEAD
-    return amp / maxgrains;
-=======
     // qDebug() << "SCHEDULER GOT AMPLITUDE" << amp;
     return amp / (nactive > 0 ? nactive : maxgrains);
->>>>>>> 9be6d2fb6fddda4fa76aed626886e9351ef6f45c
 }
 
 void Scheduler::synthetize(gsl::span<float> vec, int maxgrains) {
