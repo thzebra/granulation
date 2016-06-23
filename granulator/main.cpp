@@ -27,7 +27,7 @@ int outindex = 0;
 
 int main(int argc, char *argv[])
 {
-    RtAudio* api = new RtAudio ();
+    RtAudio* api = new RtAudio (RtAudio::Api::LINUX_ALSA);
     unsigned int bufferframes = 0;
 
     QApplication application(argc, argv);
@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
     QWidget::connect(w->m_drawingArea,
                      &Panel::DrawingArea::mouseMoveEvent,
                      w,
-                     static_cast<void (Panel::GranulatorInterface::*)(QMouseEvent*)> (&Panel::GranulatorInterface::addPoint));
+                     static_cast<void (Panel::GranulatorInterface::*)(QMouseEvent*)> (&Panel::GranulatorInterface::addPoint),
+                     Qt::QueuedConnection);
 
     w->show();
 
@@ -155,21 +156,16 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
 
         g->updateTime(streamTime);
         unsigned int nchannels = g->channels();
+        int imax = nchannels * nFrames;
 
         if (w->m_mute->isChecked()) {
-            int imax = nchannels * nFrames;
             for (int i = 0; i < imax; ++i)
                 out[i] = 0;
             return 0;
         }
 
-        int size = w->sourceData()->size();
-        for (unsigned int i = 0; i < nFrames; ++i) {
-            for (unsigned int j = 0; j < nchannels; ++j) {
-                //out[i * nchannels + j] = w->sourceData()->data((outindex * 1024 + i * nchannels + j) % size);
-                out[i * nchannels + j] = g->synthetize();
-            }
-        }
+        g->synthetize(gsl::span<float>{out, imax});
+
         if (w->m_capturebutton->isChecked()) {
             w->write(out, nFrames);
         }

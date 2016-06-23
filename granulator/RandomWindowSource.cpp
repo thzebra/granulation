@@ -28,26 +28,38 @@ RandomWindowSource::RandomWindowSource(std::shared_ptr<SourceData> source, int l
     }
 }
 
-const unsigned int RandomWindowSource::size() const {
-    return m_data.size();
+
+RandomWindowSourceView::RandomWindowSourceView() {}
+RandomWindowSourceView::RandomWindowSourceView(std::shared_ptr<SourceData> source, int length) :
+    m_rawdata{source}
+{
+    if (source) {
+        int nsamples = length * source->channels();
+        m_data.resize(nsamples);
+        std::srand(time(nullptr));
+        int datasize = (int) source->size();
+        if (datasize > 0) {
+            int begin = std::rand();
+            begin = (begin - begin % source->channels()) % (datasize - length); // ensuring canal alignment
+            qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
+            for (int i = 0; i < nsamples; ++i) {
+
+                int idx = (begin + i) % datasize;
+                m_data[i] = source->data(idx);
+            }
+        }
+    }
 }
 
-float RandomWindowSource::data(int i) const {
-    return m_data[i];
-}
 
-int RandomWindowSource::sampleRate() const {
-    return m_rawdata->sampleRate();
-}
 
-int RandomWindowSource::channels() const {
-    return m_rawdata->channels();
-}
 
-SourceData& RandomWindowSource::rawData() const {
-    if (m_rawdata)
-        return *m_rawdata;
-}
+
+
+
+
+
+
 
 }
 }

@@ -5,7 +5,7 @@
 namespace Granulation {
 namespace Synthesis {
 
-class RegularSequenceStrategy : public SequenceStrategy {
+class RegularSequenceStrategy final : public SequenceStrategy {
 public:
     RegularSequenceStrategy();
 

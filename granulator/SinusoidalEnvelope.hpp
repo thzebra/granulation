@@ -4,7 +4,7 @@
 namespace Granulation {
 namespace Synthesis {
 
-class SinusoidalEnvelope : public Envelope {
+class SinusoidalEnvelope final : public Envelope {
 public:
     SinusoidalEnvelope();
     SinusoidalEnvelope(int length);

@@ -4,11 +4,13 @@
 #include "GranulatorBase.hpp"
 #include "DummyScheduler.hpp"
 
+#include <span.h>
+
 namespace Granulation {
 namespace Synthesis {
 
 template <class Env, class Src>
-class Granulator : public GranulatorBase
+class Granulator final : public GranulatorBase
 {
 public:
     Granulator() = delete;
@@ -27,6 +29,9 @@ public:
         return m_scheduler.synthetize(m_maxgrains);
     }
 
+    virtual void synthetize(gsl::span<float> vec) override {
+        m_scheduler.synthetize(vec, m_maxgrains);
+    }
     virtual void generate(int n) override {
         for (int i = 0; i < n; ++i) {
             m_scheduler.addGrain(m_essence.makeGrain(), m_maxgrains);

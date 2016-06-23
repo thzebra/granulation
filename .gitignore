@@ -1,5 +1,10 @@
 # C++ objects and libs
-
+*automoc*
+granulator/granulator
+CMakeFiles
+*.user
+cmake_install.cmake
+*.wav
 *.slo
 *.lo
 *.o

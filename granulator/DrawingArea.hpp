@@ -10,7 +10,7 @@ namespace Panel {
 
 class GranulatorInterface;
 
-class DrawingArea : public QWidget {
+class DrawingArea final : public QWidget {
     Q_OBJECT
 public:
     explicit DrawingArea(QWidget *parent = 0);

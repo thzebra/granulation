@@ -5,7 +5,7 @@
 namespace Granulation {
 namespace Synthesis {
 
-class FileSourceData : public SourceData
+class FileSourceData final : public SourceData
 {
 public:
     FileSourceData();

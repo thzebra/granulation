@@ -7,8 +7,7 @@ namespace Granulation {
 namespace Synthesis {
 
 template <class Env, class Src>
-
-class Essence : public EssenceBase
+class Essence final : public EssenceBase
 {
 public:
     Essence() = delete;
@@ -22,7 +21,7 @@ public:
     {}
 
     virtual Grain makeGrain() override {
-        return Grain(std::make_shared<Env>(m_length), std::make_shared<Src>(m_rawdata, m_length));
+        return {std::make_shared<Env>(m_length), std::make_shared<Src>(m_rawdata, m_length)};
     }
 
     virtual int channels() const override {
