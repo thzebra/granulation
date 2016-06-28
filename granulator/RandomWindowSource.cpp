@@ -18,7 +18,7 @@ RandomWindowSource::RandomWindowSource(std::shared_ptr<SourceData> source, int l
         if (datasize > 0) {
             int begin = std::rand();
             begin = (begin - begin % source->channels()) % datasize; // ensuring canal alignment
-            m_begin = begin;
+            m_begin = begin / source->channels();
             //qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
             for (int i = 0; i < nsamples; ++i) {
 
