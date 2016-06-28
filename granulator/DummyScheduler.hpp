@@ -8,7 +8,7 @@ class DummyScheduler : public Scheduler
 {
 public:
     DummyScheduler();
-    float synthetize(int maxgrains = 1) override;
+    float synthetize(int maxgrains = 1, bool loop = false) override;
     void setStrategy(SequenceStrategy *strategy);
     void addGrain(const Grain &g);
     void activateNext();

@@ -18,7 +18,7 @@ Scheduler::~Scheduler() {
     delete m_strategy;
 }
 
-float Scheduler::synthetize(int maxgrains) {
+float Scheduler::synthetize(int maxgrains, bool loop) {
     std::lock_guard<std::mutex> lock(m_grainsLock);
 
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
@@ -36,7 +36,7 @@ float Scheduler::synthetize(int maxgrains) {
     for(Grain& grain : m_grains)
     {
         if (grain.isActive() && !grain.completed()) {
-            amp += grain.synthetize();
+            amp += grain.synthetize(loop);
             ++nactive;
             if (grain.completed()) {
                 ++ncompleted;
@@ -44,11 +44,11 @@ float Scheduler::synthetize(int maxgrains) {
             }
         }
     }
-    // qDebug() << "SCHEDULER GOT AMPLITUDE" << amp;
+    removeCompleted();
     return amp / (nactive > 0 ? nactive : maxgrains);
 }
 
-void Scheduler::synthetize(gsl::span<float> vec, int maxgrains) {
+void Scheduler::synthetize(gsl::span<float> vec, int maxgrains, bool loop) {
     std::lock_guard<std::mutex> lock(m_grainsLock);
 
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
@@ -65,7 +65,7 @@ void Scheduler::synthetize(gsl::span<float> vec, int maxgrains) {
     for(Grain& grain : m_grains)
     {
         if (grain.isActive() && !grain.completed()) {
-            grain.synthetize(vec); // The grain mixes itself.
+            grain.synthetize(vec, loop); // The grain mixes itself.
             ++nactive;
             if (grain.completed()) {
                 ++ncompleted;
@@ -132,6 +132,13 @@ void Scheduler::setInteronset(int i) {
 void Scheduler::clearGrains() {
     std::lock_guard<std::mutex> lock(m_grainsLock);
     m_grains.clear();
+}
+
+const Grain& Scheduler::lastGrainAdded() const {
+    if (m_grains.empty())
+        return Grain(nullptr, nullptr);
+    else
+        return m_grains.back();
 }
 
 }

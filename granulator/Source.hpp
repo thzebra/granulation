@@ -20,6 +20,10 @@ public:
     virtual gsl::span<const float> data() const { return {}; }
 
     virtual ~Source() = default;
+    unsigned int beginning() const;
+
+protected:
+    unsigned int m_begin{0};
 };
 
 }

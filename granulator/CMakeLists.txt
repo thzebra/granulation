@@ -4,7 +4,8 @@ project(granulator LANGUAGES CXX)
 set(EXECNAME granulator)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -flto -Wsuggest-final-types")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -flto -Wsuggest-final-types -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -flto -Wsuggest-final-types -std=c++14")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -flto -Wsuggest-final-types")
 
 find_package(Qt5 5.3 REQUIRED COMPONENTS Core Widgets Multimedia)
@@ -28,6 +29,8 @@ set (HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/GranulatorBase.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Essence.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/EssenceBase.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/GrainDisplay.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/GrainDisplayView.hpp"
 )
 
 set (SOURCES
@@ -50,9 +53,12 @@ set (SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/GranulatorBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Essence.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/EssenceBase.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/GrainDisplay.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/GrainDisplayView.cpp"
 )
 
 add_executable(${EXECNAME} ${HEADERS} ${SOURCES})
+set_target_properties(${EXECNAME} PROPERTIES CXX_STANDARD 14)
 # target_compile_options(${EXECNAME} PUBLIC -Og)
 target_link_libraries(${EXECNAME} PUBLIC Qt5::Core Qt5::Widgets Qt5::Multimedia m rtaudio sndfile)
 target_include_directories(${EXECNAME} PUBLIC GSL/include)

@@ -26,11 +26,11 @@ public:
     }
 
     virtual float synthetize() override {
-        return m_scheduler.synthetize(m_maxgrains);
+        return m_scheduler.synthetize(m_maxgrains, m_loop);
     }
 
-    virtual void synthetize(gsl::span<float> vec) override {
-        m_scheduler.synthetize(vec, m_maxgrains);
+    virtual void synthetize(gsl::span<float> vec, bool loop = false) override {
+        m_scheduler.synthetize(vec, m_maxgrains, loop);
     }
     virtual void generate(int n) override {
         for (int i = 0; i < n; ++i) {
@@ -84,10 +84,23 @@ public:
         m_scheduler.clearGrains();
     }
 
+    void setLoop(bool b) override {
+        m_loop = b;
+    }
+
+    bool loop() override {
+        return m_loop;
+    }
+
+    const Grain &lastGrainAdded() const {
+        return m_scheduler.lastGrainAdded();
+    }
+
 private:
     Scheduler m_scheduler;
     Essence<Env, Src> m_essence;
     int m_maxgrains{1};
+    bool m_loop{false};
 };
 
 }

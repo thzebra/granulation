@@ -64,7 +64,7 @@ void Grain::activate(int duration) {
     }
 }
 
-float Grain::synthetize() {
+float Grain::synthetize(bool loop) {
     // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
     // on les charge une fois au début
     const Source& source = *m_source;
@@ -73,8 +73,15 @@ float Grain::synthetize() {
     const int srcs = m_sourceSize;
 
     if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
-        m_index = 0;
-        m_channelindex = 0;
+        if (loop) {
+            m_index = 0;
+            m_channelindex = 0;
+        }
+        else {
+            markRemove();
+            m_completed = true;
+            return 0.f;
+        }
     }
 
     int idx = m_index * nc + m_channelindex;
@@ -88,7 +95,7 @@ float Grain::synthetize() {
 }
 
 
-void Grain::synthetize(gsl::span<float> vec) {
+void Grain::synthetize(gsl::span<float> vec, bool loop) {
     // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
     // on les charge une fois au début
     const Source& source = *m_source;
@@ -102,21 +109,29 @@ void Grain::synthetize(gsl::span<float> vec) {
     auto fast_data = source.data();
     if(fast_data.empty())
     {
-        for(int i = 0; i < inputSize; i++)
+        for(int i = 0; i < inputSize && !m_completed; i++)
         {
             if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
-                m_index = 0;
-                m_channelindex = 0;
+                if (loop) {
+                    m_index = 0;
+                    m_channelindex = 0;
+                }
+                else {
+                    m_completed = true;
+                    markRemove();
+                }
             }
 
-            int idx = m_index * nc + m_channelindex;
-            if (m_readBackwards)
-                idx = srcs - 1 - idx;
-            m_channelindex = (m_channelindex + 1) % nc;
-            if (m_channelindex == 0)
-                ++m_index;
+            if (!m_completed) {
+                int idx = m_index * nc + m_channelindex;
+                if (m_readBackwards)
+                    idx = srcs - 1 - idx;
+                m_channelindex = (m_channelindex + 1) % nc;
+                if (m_channelindex == 0)
+                    ++m_index;
 
-            vec[i] += source.data(idx) * envelope[m_envelopeIndex++ % m_envelopeSize];
+                vec[i] += source.data(idx) * envelope[m_envelopeIndex++ % m_envelopeSize];
+            }
         }
     }
     else
@@ -124,39 +139,55 @@ void Grain::synthetize(gsl::span<float> vec) {
         if(!m_readBackwards)
         {
             // This should be the most taken branch
-            for(int i = 0; i < inputSize; i++)
+            for(int i = 0; i < inputSize && !m_completed; ++i)
             {
                 if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
-                    m_index = 0;
-                    m_channelindex = 0;
+                    if (loop) {
+                        m_index = 0;
+                        m_channelindex = 0;
+                    }
+                    else {
+                        m_completed = true;
+                        markRemove();
+                    }
                 }
+                if (!m_completed) {
+                    int idx = m_index * nc + m_channelindex;
 
-                int idx = m_index * nc + m_channelindex;
+                    m_channelindex = (m_channelindex + 1) % nc;
+                    if (m_channelindex == 0)
+                        ++m_index;
 
-                m_channelindex = (m_channelindex + 1) % nc;
-                if (m_channelindex == 0)
-                    ++m_index;
-
-                vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+                    auto val = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+                    vec[i] += val;
+                }
             }
         }
         else
         {
-            for(int i = 0; i < inputSize; i++)
+            for(int i = 0; i < inputSize && !m_completed; i++)
             {
                 if (m_index * nc + m_channelindex >= srcs || m_index < 0)
                 {
-                    m_index = 0;
-                    m_channelindex = 0;
+                    if (loop) {
+                        m_index = 0;
+                        m_channelindex = 0;
+                    }
+                    else {
+                        m_completed = true;
+                        markRemove();
+                    }
                 }
 
-                int idx = srcs - 1 - (m_index * nc + m_channelindex);
+                if (!m_completed) {
+                    int idx = srcs - 1 - (m_index * nc + m_channelindex);
 
-                m_channelindex = (m_channelindex + 1) % nc;
-                if (m_channelindex == 0)
-                    ++m_index;
+                    m_channelindex = (m_channelindex + 1) % nc;
+                    if (m_channelindex == 0)
+                        ++m_index;
 
-                vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+                    vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+                }
             }
         }
     }
@@ -194,6 +225,20 @@ void Grain::markRemove() {
 
 bool Grain::toRemove() const {
     return m_toRemove;
+}
+
+unsigned int Grain::beginning() const {
+    if (m_source != nullptr)
+        return m_source->beginning();
+    else
+        return 0;
+}
+
+unsigned int Grain::size() const {
+    if (m_source == nullptr)
+        return 0;
+    int nch = m_source->channels();
+    nch > 0 ? m_source->size() / nch : 0;
 }
 
 }

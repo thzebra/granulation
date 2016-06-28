@@ -14,12 +14,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_capturebutton{new QPushButton(tr("Capture"))},
       m_label{new QLabel},
       m_layout{new QGridLayout},
-      m_points{std::vector<QPoint> (0)},
       m_devices{new QComboBox},
       m_drawingArea{new DrawingArea},
-      m_maxpoints(100),
-      m_pan{0},
-      m_nthpoint{0},
       m_grainDuration{new QSpinBox},
       m_grainCount{new QSpinBox},
       m_mute{new QCheckBox},
@@ -30,7 +26,10 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_densitylabel{new QLabel},
       m_cleargrains{new QPushButton(tr("Clear grains"))},
       m_sourcefilename{new QLineEdit},
-      m_outfilename{new QLineEdit}
+      m_outfilename{new QLineEdit},
+      m_loop{new QCheckBox},
+      m_looplabel{new QLabel},
+      m_graindisplayview{new GrainDisplayView(this)}
 {
     resize(600, 600);
 
@@ -58,16 +57,21 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_label->setText("No active grains");
     m_label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
+    m_loop->setChecked(false);
+    m_looplabel->setText(tr("Loop grains"));
+
     QString firstSample = tr("sample.wav");
     m_sourcefilename->setText(firstSample);
 
     FileSourceData* fsd = new FileSourceData();
     m_sourcedata = std::make_shared<FileSourceData> (*fsd);
     setSourceData(m_sourcefilename->text());
+    m_graindisplayview->grainDisplay().setData(m_sourcedata);
 
     m_outfilename->setText(tr("out.wav"));
 
-    m_layout->addWidget(m_drawingArea, 0, 0, 1, 2);
+    m_layout->addWidget(m_drawingArea, 0, 0, 1, 1);
+    m_layout->addWidget(m_graindisplayview, 0, 1, 1, 1);
     m_layout->addWidget(m_label, 1, 0);
     m_layout->addWidget(m_devices, 2, 0, 1, 2);
     m_layout->addWidget(m_countlabel, 3, 0);
@@ -78,10 +82,12 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_layout->addWidget(m_density, 5, 1);
     m_layout->addWidget(m_mutelabel, 6, 0);
     m_layout->addWidget(m_mute, 6, 1);
-    m_layout->addWidget(m_capturebutton, 7, 0);
-    m_layout->addWidget(m_cleargrains, 7, 1);
-    m_layout->addWidget(m_sourcefilename, 8, 0);
-    m_layout->addWidget(m_outfilename, 9, 0);
+    m_layout->addWidget(m_looplabel, 7, 0);
+    m_layout->addWidget(m_loop, 7, 1);
+    m_layout->addWidget(m_capturebutton, 8, 0);
+    m_layout->addWidget(m_cleargrains, 8, 1);
+    m_layout->addWidget(m_sourcefilename, 9, 0);
+    m_layout->addWidget(m_outfilename, 9, 1);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);
@@ -96,10 +102,17 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
             [=] () mutable -> void { granulator->clearGrains(); m_label->setText(tr("No active grains"));});
     connect(m_sourcefilename,
             &QLineEdit::editingFinished,
-            [=] () mutable -> void { setSourceData(m_sourcefilename->text()); });
+            [=] () mutable -> void { setSourceData(m_sourcefilename->text());
+                                     m_graindisplayview->grainDisplay().setData(m_sourcedata);});
     connect(m_capturebutton,
             &QPushButton::clicked,
             [=] (bool checked) mutable -> void { toggleCapture(checked); });
+    connect(m_drawingArea,
+            &DrawingArea::mouseMoveEvent,
+            [=] (QMouseEvent* event) mutable -> void { addPoint(event); });
+    connect(m_loop,
+            &QCheckBox::stateChanged,
+            [=] (bool isChecked) mutable -> void { granulator->setLoop(isChecked); });
 }
 
 GranulatorInterface::~GranulatorInterface()
@@ -125,19 +138,19 @@ void GranulatorInterface::addPoint(QPoint p) {
     m_points.push_back(p);
     setPan((2 * float(p.x()) / float(m_central->height())) - 1.f);
     granulator->generate(1);
+    auto g = granulator->lastGrainAdded();
+    m_graindisplayview->grainDisplay().addGrain(g);
 }
 
 void GranulatorInterface::addPoint(QMouseEvent *m) {
-    addPoint(m->pos());
-    int nactive = granulator->grainCount();
-    m_label->setText(QString::number(nactive) + tr(" active grains"));
-    /*
+//    addPoint(m->pos());
+//    int nactive = granulator->grainCount();
+//    m_label->setText(QString::number(nactive) + tr(" active grains"));
     if (m_nthpoint == 0)
         addPoint(m->pos());
     m_nthpoint = (m_nthpoint + 1) % 50;
     int nactive = granulator->grainCount();
     m_label->setText(QString::number(nactive) + tr(" active grains"));
-    */
 }
 
 void GranulatorInterface::updateLabel() {}

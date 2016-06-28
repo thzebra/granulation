@@ -18,7 +18,8 @@ RandomWindowSource::RandomWindowSource(std::shared_ptr<SourceData> source, int l
         if (datasize > 0) {
             int begin = std::rand();
             begin = (begin - begin % source->channels()) % datasize; // ensuring canal alignment
-            qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
+            m_begin = begin;
+            //qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
             for (int i = 0; i < nsamples; ++i) {
 
                 int idx = (begin + i) % datasize;
@@ -41,7 +42,7 @@ RandomWindowSourceView::RandomWindowSourceView(std::shared_ptr<SourceData> sourc
         if (datasize > 0) {
             int begin = std::rand();
             begin = (begin - begin % source->channels()) % (datasize - length); // ensuring canal alignment
-            qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
+            //qDebug() << "first sample at" << begin << "out of" << source->size() << "last sample at" << ((begin + length - 1) % datasize);
             for (int i = 0; i < nsamples; ++i) {
 
                 int idx = (begin + i) % datasize;

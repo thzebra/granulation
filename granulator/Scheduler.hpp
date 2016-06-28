@@ -19,8 +19,8 @@ public:
     Scheduler();
     Scheduler(SequenceStrategy* strategy);
     virtual ~Scheduler();
-    virtual float synthetize(int maxgrains = 1);
-    virtual void synthetize(gsl::span<float> vec, int maxgrains);
+    virtual float synthetize(int maxgrains = 1, bool loop = false);
+    virtual void synthetize(gsl::span<float> vec, int maxgrains, bool loop = false);
     virtual void setStrategy(SequenceStrategy* strategy);
 
     virtual void addGrain(const Grain& g, int maxgrains);
@@ -30,6 +30,7 @@ public:
     virtual void updateTime(double streamTime);
     virtual void setInteronset(int i);
     virtual void clearGrains();
+    virtual const Grain& lastGrainAdded() const;
 
 private:
     mutable std::mutex m_grainsLock;

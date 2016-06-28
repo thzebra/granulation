@@ -2,6 +2,8 @@
 #include <QMouseEvent>
 #include "GranulatorInterface.hpp"
 #include <QDebug>
+#include <QGraphicsSceneMouseEvent>
+#include <QScrollBar>
 
 namespace Granulation {
 namespace Panel {

@@ -17,14 +17,16 @@ public:
 
     bool completed() const;
     void activate(int duration);
-    float synthetize();
-    void synthetize(gsl::span<float> vec);
+    float synthetize(bool loop = false);
+    void synthetize(gsl::span<float> vec, bool loop = false);
     bool isActive() const;
     bool isReadBackwards() const;
     void operator=(const Grain&);
     std::string grainToString() const;
     void markRemove();
     bool toRemove() const;
+    unsigned int beginning() const;
+    unsigned int size() const;
 
 private:
     std::shared_ptr<Envelope> m_envelope;

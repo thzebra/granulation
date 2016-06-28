@@ -15,6 +15,7 @@
 #include <QLineEdit>
 #include <memory>
 #include <sndfile.hh>
+#include "GrainDisplayView.hpp"
 
 namespace Granulation {
 namespace Panel {
@@ -54,6 +55,10 @@ public:
     QLineEdit* m_sourcefilename{};
     QLineEdit* m_outfilename{};
 
+    QCheckBox* m_loop{};
+    QLabel* m_looplabel{};
+
+    GrainDisplayView* m_graindisplayview{};
 
 
     float pan();
@@ -70,13 +75,13 @@ public slots:
 
 private:
     std::vector<QPoint> m_points;
-    const unsigned int m_maxpoints;
+    //const unsigned int m_maxpoints;
     float m_pan {0.f};
     int m_nthpoint;
     std::shared_ptr<SourceData> m_sourcedata;
 
-    int m_maxgrains{1};
-    int m_duration{10};
+    int m_maxgrains{10};
+    int m_duration{500};
 
     SNDFILE* m_outfile{};
     SF_INFO m_outinfo{};
