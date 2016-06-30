@@ -10,7 +10,7 @@ namespace Synthesis {
 class RandomWindowSource final: public Source {
 public:
     RandomWindowSource();
-    RandomWindowSource(std::shared_ptr<SourceData> source, int length);
+    RandomWindowSource(std::shared_ptr<SourceData> source, int length, int begin = 0);
     const unsigned int size() const override {
         return m_data.size();
     }
@@ -31,6 +31,8 @@ public:
         if (m_rawdata)
             return *m_rawdata;
     }
+
+    void resize(int length) override;
 
 private:
     std::vector<float> m_data;
@@ -41,30 +43,37 @@ private:
 class RandomWindowSourceView final: public Source {
 public:
     RandomWindowSourceView();
-    RandomWindowSourceView(std::shared_ptr<SourceData> source, int length);
+    RandomWindowSourceView(std::shared_ptr<SourceData> source, int length, int begin);
+
     const unsigned int size() const override {
-        return m_data.size();
+        return m_length;
     }
+
     float data(int i) const override {
-        return m_data[i];
+        if (m_rawdata == nullptr)
+            return 0.f;
+        return m_rawdata->data(i);
     }
 
     gsl::span<const float> data() const override {
-        return m_data;
+        return {};
     }
+
     int sampleRate() const override {
         return m_rawdata->sampleRate();
     }
+
     int channels() const override {
         return m_rawdata->channels();
     }
+
     SourceData& rawData() const override {
         if (m_rawdata)
             return *m_rawdata;
     }
 
 private:
-    std::vector<float> m_data;
+    const unsigned int m_length;
     std::shared_ptr<SourceData> m_rawdata;
 };
 

@@ -28,6 +28,8 @@ public:
     unsigned int beginning() const;
     unsigned int size() const;
 
+    void resize(int newsize);
+
 private:
     std::shared_ptr<Envelope> m_envelope;
     std::shared_ptr<Source> m_source;

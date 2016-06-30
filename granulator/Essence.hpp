@@ -21,7 +21,7 @@ public:
     {}
 
     virtual Grain makeGrain() override {
-        return {std::make_shared<Env>(m_length), std::make_shared<Src>(m_rawdata, m_length)};
+        return {std::make_shared<Env>(m_length), std::make_shared<Src>(m_rawdata, m_length, m_begin)};
     }
 
     virtual int channels() const override {
@@ -44,13 +44,20 @@ public:
         return m_rawdata;
     }
 
-    void setDuration(int duration) {
-        m_length = duration * m_rawdata->sampleRate() / 1000;
+    void setDuration(int duration) override {
+        auto l = duration * (m_rawdata->sampleRate() / 1000.f);
+        std::cout << "set duration to " << duration << "ms ie " << l << " samples" << std::endl;
+        m_length = l;
+    }
+
+    void setBegin(int firstSample) override {
+        m_begin = firstSample;
     }
 
 private:
     std::shared_ptr<SourceData> m_rawdata;
     int m_length;
+    int m_begin;
 };
 }
 }

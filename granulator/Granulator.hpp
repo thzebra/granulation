@@ -96,6 +96,10 @@ public:
         return m_scheduler.lastGrainAdded();
     }
 
+    void setBegin(int begin) override {
+        m_essence.setBegin(begin);
+    }
+
 private:
     Scheduler m_scheduler;
     Essence<Env, Src> m_essence;

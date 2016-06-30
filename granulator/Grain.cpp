@@ -241,5 +241,14 @@ unsigned int Grain::size() const {
     nch > 0 ? m_source->size() / nch : 0;
 }
 
+void Grain::resize(int newsize) {
+    if (newsize >= 0) {
+        std::cout << "resizing grain to " << newsize << " samples per channel" << std::endl;
+        m_envelope->recompute(newsize);
+        std::cout << "source will have " << (newsize * m_source->channels()) << " samples total" << std::endl;
+        m_source->resize(newsize * m_source->channels());
+    }
+}
+
 }
 }

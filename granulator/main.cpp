@@ -3,6 +3,7 @@
 #include <rtaudio/RtAudio.h>
 #include "RandomSourceData.hpp"
 #include "RandomWindowSource.hpp"
+#include "CustomWindowSource.hpp"
 #include "RegularSequenceStrategy.hpp"
 #include "Scheduler.hpp"
 #include "SinusoidalEnvelope.hpp"
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
     for (unsigned int i = 0; i < ndev; ++i) {
         w->m_devices->addItem(QString(api->getDeviceInfo(i).name.c_str()));
     }
-    w->granulator = new Granulator<SinusoidalEnvelope, RandomWindowSource> (w->sourceData(), w->m_grainDuration->value());
+    w->granulator = new Granulator<SinusoidalEnvelope, CustomWindowSource> (w->sourceData(), w->m_grainDuration->value());
     RegularSequenceStrategy strat = RegularSequenceStrategy (w->m_density->value(), w->m_grainDuration->value());
     w->granulator->setStrategy(&strat);
     w->granulator->setMaxGrains(w->m_grainCount->value());
@@ -158,13 +159,16 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
         unsigned int nchannels = g->channels();
         int imax = nchannels * nFrames;
 
+        for (int i = 0; i < imax; ++i)
+            out[i] = 0;
+
         if (w->m_mute->isChecked()) {
-            for (int i = 0; i < imax; ++i)
-                out[i] = 0;
             return 0;
         }
 
         g->synthetize(gsl::span<float>{out, imax});
+        w->m_graindisplayview->grainDisplay().advanceIndices(imax);
+        w->m_graindisplayview->grainDisplay().update();
 
         if (w->m_capturebutton->isChecked()) {
             w->write(out, nFrames);

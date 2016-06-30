@@ -44,10 +44,15 @@ public:
     void setGrains(std::deque<Synthesis::Grain> grains);
     void addGrain(const Synthesis::Grain &grain);
 
+    void advanceIndices(int nsamples);
+
+    void setLoop(bool looping);
+
 signals:
     void pressed(QGraphicsSceneMouseEvent* event);
     void moved(QGraphicsSceneMouseEvent* event);
     void released(QGraphicsSceneMouseEvent* event);
+    void grainadded(int firstSample, int length);
 
 public slots:
      void scrollValueChanged(int scrollval);
@@ -89,7 +94,12 @@ private:
     std::deque<GrainItem> m_grains;
     QList<QPainterPath> m_grainsPaths;
     QList<QPainterPath> m_indexPaths;
-    void advanceIndices(int nsamples);
+
+    bool m_loop{false};
+
+    QPainterPath m_newGrainPath;
+    QRectF m_newGrain;
+    int m_grainbegin{0};
 
     // QGraphicsItem interface
 protected:

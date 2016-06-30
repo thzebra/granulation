@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QScrollBar>
 #include <Grain.hpp>
+#include <QGraphicsSceneDragDropEvent>
 
 namespace Granulation {
 namespace Panel {
@@ -148,6 +149,7 @@ void GrainDisplay::paint_impl(QPainter* painter) const {
     }
 
     painter->restore();
+    painter->save();
 
     painter->setPen(Qt::red);
 
@@ -158,17 +160,39 @@ void GrainDisplay::paint_impl(QPainter* painter) const {
         painter->translate(0, -h);
     }
 
+    painter->restore();
+    painter->save();
+
+    painter->setPen(Qt::green);
+    painter->setBrush(QColor(0, 255, 0, 100));
+
+    for (int c = 0; c < nchannels; ++c) {
+        painter->drawRect(m_newGrain);
+        painter->translate(0, -h);
+    }
+    painter->restore();
+
 }
 
 void GrainDisplay::mousePressEvent(QGraphicsSceneMouseEvent* event) {
+    qreal xpos = event->pos().x();
+    m_newGrain = QRectF(xpos, 0, 1, height() / m_data.size());
+    m_grainbegin = xpos * m_data[0].size() / width();
+    qDebug() << "source has" << m_data[0].size() << "samples";
     emit pressed(event);
 }
 
 void GrainDisplay::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     emit released(event);
+    int length = m_newGrain.width() * m_data[0].size() / width();
+    qDebug() << "emitting grainadded firstSample at" << m_grainbegin << "length in samples" << length << "aka in pixels" << m_newGrain.width();
+    emit grainadded(m_grainbegin, length);
+
+    m_newGrain = QRectF();
 }
 
 void GrainDisplay::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    m_newGrain.setWidth(std::max(qreal(0), event->pos().x() - m_newGrain.left()));
     emit moved(event);
 }
 
@@ -342,7 +366,6 @@ void GrainDisplay::addGrain(const Synthesis::Grain& grain) {
    GrainItem item = {int64_t(grain.beginning()), grain.size(), 0};
    m_grains.push_back(item);
    drawGrain(item, m_zoom);
-    update();
 }
 
 void GrainDisplay::setGrains(std::deque<Synthesis::Grain> grains) {
@@ -354,7 +377,6 @@ void GrainDisplay::setGrains(std::deque<Synthesis::Grain> grains) {
 
 void GrainDisplay::advanceIndices(int nsamples) {
     for (GrainItem& item: m_grains) {
-        item.index += nsamples % item.length;
     }
 }
 
@@ -367,22 +389,24 @@ void GrainDisplay::drawGrain(const GrainItem &item, double zoom) {
 
     const int64_t h = height() / (double)nchannels;
     const int w = width();
-    int64_t topVal = h / 4;
+    int64_t topVal = 0;
     int64_t approxLeft = item.firstSample * 1000 / (zoom * m_sampleRate);
     int64_t index = (item.index + item.firstSample) * 1000 / (zoom * m_sampleRate);
 
     QPainterPath path{};
-    QRectF rect = QRectF(approxLeft, topVal, item.length / density, h / 2);
-    qDebug() << approxLeft << topVal << item.length / density << h / 2 << width() << item.firstSample << density;
+    QRectF rect = QRectF(approxLeft, topVal, item.length / density, h);
     path.addRect(rect);
     m_grainsPaths.append(path);
 
     QPainterPath idxpath{};
-    path.moveTo(index, topVal);
-    path.lineTo(index, topVal + h / 2);
+    idxpath.moveTo(index, topVal);
+    idxpath.lineTo(index, topVal + h);
+    m_indexPaths.append(idxpath);
 }
 
 void GrainDisplay::drawGrains(double zoom) {
+    m_indexPaths.clear();
+    m_grainsPaths.clear();
     for (GrainItem& item: m_grains) {
         drawGrain(item, zoom);
     }
@@ -403,6 +427,11 @@ void GrainDisplay::resize(const qreal &w, const qreal &h) {
 void GrainDisplay::resize(const QSize &size) {
     resize(size.width(), size.height());
 }
+
+void GrainDisplay::setLoop(bool looping) {
+    m_loop = looping;
+}
+
 }
 }
 

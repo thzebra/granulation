@@ -4,7 +4,9 @@ namespace Granulation {
 namespace Synthesis {
 
 Source::Source() {}
-Source::Source(SourceData *sd, int length) {}
+Source::Source(std::shared_ptr<SourceData> sd, int length, int begin) :
+    m_begin{begin}
+{}
 
 unsigned int Source::beginning() const {
     return m_begin;

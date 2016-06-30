@@ -102,8 +102,10 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
             [=] () mutable -> void { granulator->clearGrains(); m_label->setText(tr("No active grains"));});
     connect(m_sourcefilename,
             &QLineEdit::editingFinished,
-            [=] () mutable -> void { setSourceData(m_sourcefilename->text());
-                                     m_graindisplayview->grainDisplay().setData(m_sourcedata);});
+            [=] () mutable -> void {
+        setSourceData(m_sourcefilename->text());
+        m_graindisplayview->grainDisplay().setData(m_sourcedata);
+    });
     connect(m_capturebutton,
             &QPushButton::clicked,
             [=] (bool checked) mutable -> void { toggleCapture(checked); });
@@ -112,7 +114,20 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
             [=] (QMouseEvent* event) mutable -> void { addPoint(event); });
     connect(m_loop,
             &QCheckBox::stateChanged,
-            [=] (bool isChecked) mutable -> void { granulator->setLoop(isChecked); });
+            [=] (bool isChecked) mutable -> void {
+        granulator->setLoop(isChecked);
+        m_graindisplayview->grainDisplay().setLoop(isChecked);
+    });
+
+    connect(&(m_graindisplayview->grainDisplay()),
+            &GrainDisplay::grainadded,
+            [=] (int first, int length) mutable -> void {
+        qDebug() << "received grainadded" << first << length;
+        granulator->setEssenceDuration(length / (granulator->sampleRate() / 1000.f));
+        qDebug() << "set essence duration" << (length / (granulator->sampleRate() / 1000.f)) << "ms";
+        granulator->setBegin(first);
+        granulator->generate(1);
+    });
 }
 
 GranulatorInterface::~GranulatorInterface()

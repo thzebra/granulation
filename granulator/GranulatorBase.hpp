@@ -33,6 +33,8 @@ public:
     virtual void setLoop(bool b) = 0;
     virtual bool loop() = 0;
 
+    virtual void setBegin(int begin) = 0;
+
     unsigned int bufferFrames{512};
 };
 

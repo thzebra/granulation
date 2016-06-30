@@ -17,6 +17,9 @@ public:
     virtual int length() const = 0;
     virtual int grainDuration() const = 0;
     virtual std::shared_ptr<SourceData> rawData() const = 0;
+
+    virtual void setDuration(int duration) = 0;
+    virtual void setBegin(int firstSample) = 0;
 };
 
 }

@@ -9,6 +9,7 @@ GrainDisplayView::GrainDisplayView(QWidget *parent) :
     m_scene.addItem(&m_graindisplay);
     this->setScene(&m_scene);
     setSceneRect(m_graindisplay.boundingRect());
+    setAutoFillBackground(true);
 }
 
 GrainDisplayView::GrainDisplayView(QGraphicsScene *scene, QWidget *parent) : QGraphicsView(scene, parent) {}

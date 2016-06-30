@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <cassert>
-
+#include <iostream>
 
 namespace Granulation {
 namespace Synthesis {
@@ -10,9 +10,10 @@ class Envelope {
 public:
     Envelope() = default;
 
-    Envelope(int length):
-        m_data(length)
+    Envelope(int64_t length)
     {
+        std::cout << "constructing envelope of length " << length << " with a max length of " << m_data.max_size() << std::endl;
+        m_data.resize(length);
     }
 
     Envelope(const Envelope& env):
@@ -43,6 +44,9 @@ public:
     }
 
     virtual void fill() = 0;
+
+    virtual void recompute(int64_t length) = 0;
+
     virtual ~Envelope() = default;
 
 protected:
