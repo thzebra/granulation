@@ -29,7 +29,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_outfilename{new QLineEdit},
       m_loop{new QCheckBox},
       m_looplabel{new QLabel},
-      m_graindisplayview{new GrainDisplayView(this)}
+      m_graindisplayview{new GrainDisplayView(this)},
+      m_generateGrains{new QPushButton(tr("Generate..."))}
 {
     resize(600, 600);
 
@@ -70,8 +71,10 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
 
     m_outfilename->setText(tr("out.wav"));
 
-    m_layout->addWidget(m_drawingArea, 0, 0, 1, 1);
-    m_layout->addWidget(m_graindisplayview, 0, 1, 1, 1);
+    m_generateGrains->setCheckable(true);
+
+    //m_layout->addWidget(m_drawingArea, 0, 0, 1, 1);
+    m_layout->addWidget(m_graindisplayview, 0, 0, 1, 2);
     m_layout->addWidget(m_label, 1, 0);
     m_layout->addWidget(m_devices, 2, 0, 1, 2);
     m_layout->addWidget(m_countlabel, 3, 0);
@@ -88,6 +91,7 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_layout->addWidget(m_cleargrains, 8, 1);
     m_layout->addWidget(m_sourcefilename, 9, 0);
     m_layout->addWidget(m_outfilename, 9, 1);
+    m_layout->addWidget(m_generateGrains, 10, 0);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);
@@ -122,11 +126,10 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     connect(&(m_graindisplayview->grainDisplay()),
             &GrainDisplay::grainadded,
             [=] (int first, int length) mutable -> void {
-        qDebug() << "received grainadded" << first << length;
         granulator->setEssenceDuration(length / (granulator->sampleRate() / 1000.f));
-        qDebug() << "set essence duration" << (length / (granulator->sampleRate() / 1000.f)) << "ms";
         granulator->setBegin(first);
         granulator->generate(1);
+        m_graindisplayview->grainDisplay().addGrain(granulator->lastGrainAdded());
     });
 }
 

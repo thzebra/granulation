@@ -30,8 +30,12 @@ void GrainDisplay::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 void GrainDisplay::setData(const std::shared_ptr<Synthesis::SourceData> data) {
     prepareGeometryChange();
     m_data.clear();
+
+    m_lock.lock();
     m_grains.clear();
     m_grainsPaths.clear();
+    m_lock.unlock();
+
     m_density = -1;
     if (data != nullptr) {
         const Synthesis::SourceData& srcdata = *data;
@@ -141,24 +145,30 @@ void GrainDisplay::paint_impl(QPainter* painter) const {
 
     painter->save();
 
+    //qDebug() << "painting" << m_grainsPaths.size() << "grains";
+
+    m_lock.lock();
     for (int c = 0; c < nchannels; ++c) {
         for (const auto& path: m_grainsPaths) {
             painter->drawPath(path);
         }
         painter->translate(0, -h);
     }
+    m_lock.unlock();
 
     painter->restore();
     painter->save();
 
     painter->setPen(Qt::red);
 
+    m_lock.lock();
     for (int c = 0; c < nchannels; ++c) {
         for (const auto& path: m_indexPaths) {
             painter->drawPath(path);
         }
         painter->translate(0, -h);
     }
+    m_lock.unlock();
 
     painter->restore();
     painter->save();
@@ -178,14 +188,14 @@ void GrainDisplay::mousePressEvent(QGraphicsSceneMouseEvent* event) {
     qreal xpos = event->pos().x();
     m_newGrain = QRectF(xpos, 0, 1, height() / m_data.size());
     m_grainbegin = xpos * m_data[0].size() / width();
-    qDebug() << "source has" << m_data[0].size() << "samples";
+    //qDebug() << "source has" << m_data[0].size() << "samples";
     emit pressed(event);
 }
 
 void GrainDisplay::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     emit released(event);
     int length = m_newGrain.width() * m_data[0].size() / width();
-    qDebug() << "emitting grainadded firstSample at" << m_grainbegin << "length in samples" << length << "aka in pixels" << m_newGrain.width();
+    //qDebug() << "emitting grainadded firstSample at" << m_grainbegin << "length in samples" << length << "aka in pixels" << m_newGrain.width();
     emit grainadded(m_grainbegin, length);
 
     m_newGrain = QRectF();
@@ -363,45 +373,64 @@ qreal GrainDisplay::width() const
 }
 
 void GrainDisplay::addGrain(const Synthesis::Grain& grain) {
-   GrainItem item = {int64_t(grain.beginning()), grain.size(), 0};
-   m_grains.push_back(item);
-   drawGrain(item, m_zoom);
+    GrainItem item = {int64_t(grain.beginning()), grain.size(), grain.currentIndex(), false};
+    m_grains.push_back(item);
+    drawGrain(item, m_zoom);
 }
 
 void GrainDisplay::setGrains(std::deque<Synthesis::Grain> grains) {
-    m_grains.empty();
+    m_lock.lock();
+    m_grains.clear();
+    m_grainsPaths.clear();
+    m_indexPaths.clear();
     for (auto grain: grains) {
         addGrain(grain);
     }
+    m_lock.unlock();
+    update();
 }
 
 void GrainDisplay::advanceIndices(int nsamples) {
     for (GrainItem& item: m_grains) {
+        if (!item.ended) {
+            item.index += nsamples;
+            if (item.index >= item.length) {
+                if (m_loop)
+                    item.index %= item.length;
+                else {
+                    item.index = 2 * item.length;
+                    item.ended = true;
+                }
+            }
+        }
     }
 }
 
 void GrainDisplay::drawGrain(const GrainItem &item, double zoom) {
-    const double density = std::max((zoom * m_sampleRate) / 1000., 1.);
-    const double densityratio = (m_density > 0 && density > 0) ? m_density / density : 1.;
-    int64_t nchannels = m_data.size();
-    if (nchannels == 0)
-        return;
+    if (!item.ended) {
+        const double density = std::max((zoom * m_sampleRate) / 1000., 1.);
+        const double densityratio = (m_density > 0 && density > 0) ? m_density / density : 1.;
 
-    const int64_t h = height() / (double)nchannels;
-    const int w = width();
-    int64_t topVal = 0;
-    int64_t approxLeft = item.firstSample * 1000 / (zoom * m_sampleRate);
-    int64_t index = (item.index + item.firstSample) * 1000 / (zoom * m_sampleRate);
+        int64_t nchannels = m_data.size();
+        if (nchannels == 0)
+            return;
 
-    QPainterPath path{};
-    QRectF rect = QRectF(approxLeft, topVal, item.length / density, h);
-    path.addRect(rect);
-    m_grainsPaths.append(path);
+        const int64_t h = height() / (double)nchannels;
+        const int w = width();
+        int64_t topVal = 0;
+        int64_t approxLeft = item.firstSample * 1000 / (zoom * m_sampleRate);
+        int64_t index = (item.index + item.firstSample) * 1000 / (zoom * m_sampleRate);
 
-    QPainterPath idxpath{};
-    idxpath.moveTo(index, topVal);
-    idxpath.lineTo(index, topVal + h);
-    m_indexPaths.append(idxpath);
+        QPainterPath path{};
+        QRectF rect = QRectF(approxLeft, topVal, item.length / density, h);
+        path.addRect(rect);
+        m_grainsPaths.append(path);
+
+        QPainterPath idxpath{};
+        idxpath.moveTo(index, topVal);
+        idxpath.lineTo(index, topVal + h);
+        m_indexPaths.append(idxpath);
+    }
 }
 
 void GrainDisplay::drawGrains(double zoom) {

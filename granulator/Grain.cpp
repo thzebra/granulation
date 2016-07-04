@@ -12,6 +12,7 @@ Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s) :
     m_source{s},
     m_envelope{e}
 {
+    //qDebug() << "grain size" << size() << "env size" << m_envelope->size() << "src size" << m_source->size() << m_source->channels();
 }
 
 Grain::Grain(const Grain & grain) :
@@ -243,11 +244,25 @@ unsigned int Grain::size() const {
 
 void Grain::resize(int newsize) {
     if (newsize >= 0) {
-        std::cout << "resizing grain to " << newsize << " samples per channel" << std::endl;
         m_envelope->recompute(newsize);
-        std::cout << "source will have " << (newsize * m_source->channels()) << " samples total" << std::endl;
         m_source->resize(newsize * m_source->channels());
     }
+}
+
+int Grain::channels() const {
+    if (m_source != nullptr)
+        return m_source->channels();
+    return 1;
+}
+
+int Grain::sampleRate() const {
+    if (m_source != nullptr)
+        return m_source->sampleRate();
+    return 44100;
+}
+
+int Grain::currentIndex() const {
+    return m_envelopeIndex;
 }
 
 }

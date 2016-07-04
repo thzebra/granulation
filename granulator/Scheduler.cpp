@@ -108,6 +108,8 @@ void Scheduler::activateNext() {
     if (it != m_grains.end()) {
         it->activate(m_strategy->nextDuration());
         ++m_actives;
+        int mslength = (it->size() / it->channels()) / (it->sampleRate() / 1000.f);
+        setInteronset(mslength / 2);
     }
 }
 
@@ -139,6 +141,10 @@ const Grain& Scheduler::lastGrainAdded() const {
         return Grain(nullptr, nullptr);
     else
         return m_grains.back();
+}
+
+const std::deque<Grain> Scheduler::grains() const {
+    return m_grains;
 }
 
 }

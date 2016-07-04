@@ -12,7 +12,6 @@ public:
 
     Envelope(int64_t length)
     {
-        std::cout << "constructing envelope of length " << length << " with a max length of " << m_data.max_size() << std::endl;
         m_data.resize(length);
     }
 
@@ -44,6 +43,7 @@ public:
     }
 
     virtual void fill() = 0;
+    virtual void setADSR(int attms, int decms, int susms, int relms, int samplerate) {}
 
     virtual void recompute(int64_t length) = 0;
 

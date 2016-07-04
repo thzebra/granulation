@@ -151,7 +151,7 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
     Panel::GranulatorInterface* w = (Panel::GranulatorInterface*) userData;
     auto g = w->granulator;
 
-    using clck = std::chrono::high_resolution_clock;
+//    using clck = std::chrono::high_resolution_clock;
     if (g) {
         float* out = (float*) outputBuffer;
 
@@ -167,11 +167,15 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
         }
 
         g->synthetize(gsl::span<float>{out, imax});
-        w->m_graindisplayview->grainDisplay().advanceIndices(imax);
-        w->m_graindisplayview->grainDisplay().update();
+
+        w->m_graindisplayview->grainDisplay().setGrains(g->grains());
 
         if (w->m_capturebutton->isChecked()) {
             w->write(out, nFrames);
+        }
+
+        if (w->m_generateGrains->isChecked() && g->grainCount() < g->maxGrains()) {
+            g->generate(1);
         }
     }
     return 0;

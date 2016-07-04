@@ -5,6 +5,7 @@
 #include "DummyScheduler.hpp"
 
 #include <span.h>
+#include <iostream>
 
 namespace Granulation {
 namespace Synthesis {
@@ -98,6 +99,10 @@ public:
 
     void setBegin(int begin) override {
         m_essence.setBegin(begin);
+    }
+
+    const std::deque<Grain> grains() const override {
+        return m_scheduler.grains();
     }
 
 private:

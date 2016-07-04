@@ -27,6 +27,10 @@ public:
     bool toRemove() const;
     unsigned int beginning() const;
     unsigned int size() const;
+    int channels() const;
+    int sampleRate() const;
+
+    int currentIndex() const;
 
     void resize(int newsize);
 

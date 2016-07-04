@@ -60,6 +60,7 @@ public:
 
     GrainDisplayView* m_graindisplayview{};
 
+    QPushButton* m_generateGrains{};
 
     float pan();
     void setPan(float p);

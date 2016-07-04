@@ -46,7 +46,7 @@ public:
 
     void setDuration(int duration) override {
         auto l = duration * (m_rawdata->sampleRate() / 1000.f);
-        std::cout << "set duration to " << duration << "ms ie " << l << " samples" << std::endl;
+        //std::cout << "set duration to " << duration << "ms ie " << l << " samples" << std::endl;
         m_length = l;
     }
 

@@ -13,6 +13,7 @@ find_package(Qt5 5.3 REQUIRED COMPONENTS Core Widgets Multimedia)
 set (HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/Envelope.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SinusoidalEnvelope.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ADSREnvelope.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Grain.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/GranulatorInterface.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/DrawingArea.hpp"
@@ -37,6 +38,7 @@ set (HEADERS
 set (SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Envelope.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SinusoidalEnvelope.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ADSREnvelope.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Grain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/GranulatorInterface.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/DrawingArea.cpp"

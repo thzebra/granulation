@@ -3,6 +3,7 @@
 #include <memory>
 #include <QMouseEvent>
 #include <deque>
+#include <QMutex>
 
 namespace Granulation {
 namespace Synthesis {
@@ -17,6 +18,7 @@ struct GrainItem {
     unsigned int length; // number of samples (in one channel)
     int index; // local index of current sample
     QString toQString() const;
+    bool ended;
 };
 
 
@@ -100,6 +102,8 @@ private:
     QPainterPath m_newGrainPath;
     QRectF m_newGrain;
     int m_grainbegin{0};
+
+    mutable QMutex m_lock;
 
     // QGraphicsItem interface
 protected:

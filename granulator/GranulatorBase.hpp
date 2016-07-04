@@ -34,6 +34,7 @@ public:
     virtual bool loop() = 0;
 
     virtual void setBegin(int begin) = 0;
+    virtual const std::deque<Grain> grains() const = 0;
 
     unsigned int bufferFrames{512};
 };
