@@ -35,7 +35,7 @@ SourceData& CustomWindowSource::rawData() const {
 }
 
 gsl::span<const float> CustomWindowSource::data() const {
-    return {};
+    return m_rawdata->data();
 }
 
 void CustomWindowSource::resize(int length) {

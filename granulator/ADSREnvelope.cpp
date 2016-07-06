@@ -5,7 +5,7 @@ namespace Granulation {
 namespace Synthesis {
 
 ADSREnvelope::ADSREnvelope() {}
-ADSREnvelope::ADSREnvelope(int64_t length) : Envelope(length) {
+ADSREnvelope::ADSREnvelope(int64_t length, int sampleRate) : Envelope(length, sampleRate) {
     fill();
 }
 
@@ -49,19 +49,6 @@ void ADSREnvelope::fill() {
     for (int i = i0; i < s; ++i) {
         m_data[i] = volsustain * ((i0 - i) / (s - i0) + 1);
     }
-}
-
-void ADSREnvelope::setADSR(int attms, int decms, int susms, int relms, int samplerate) {
-    m_attack = std::max(attms, 0);
-    m_decay = std::max(decms, 0);
-    m_release = std::max(relms, 0);
-
-    if (m_sampleRate > 0)
-        m_sampleRate = samplerate;
-
-    int length = (attms + decms + susms + relms) * (m_sampleRate / 1000.f);
-
-    recompute(length);
 }
 
 void ADSREnvelope::recompute(int64_t length) {

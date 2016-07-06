@@ -106,7 +106,7 @@ void Scheduler::activateNext() {
     auto it = m_grains.begin();
     for (; it != m_grains.end() && it->isActive(); ++it) {}
     if (it != m_grains.end()) {
-        it->activate(m_strategy->nextDuration());
+        it->activate(m_readBackwards);
         ++m_actives;
         int mslength = (it->size() / it->channels()) / (it->sampleRate() / 1000.f);
         setInteronset(mslength / 2);
@@ -145,6 +145,10 @@ const Grain& Scheduler::lastGrainAdded() const {
 
 const std::deque<Grain> Scheduler::grains() const {
     return m_grains;
+}
+
+void Scheduler::setReadDirection(bool readBackwards) {
+    m_readBackwards = readBackwards;
 }
 
 }

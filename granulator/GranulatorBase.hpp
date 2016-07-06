@@ -35,6 +35,7 @@ public:
 
     virtual void setBegin(int begin) = 0;
     virtual const std::deque<Grain> grains() const = 0;
+    virtual void setReadDirection(bool readBackwards) = 0;
 
     unsigned int bufferFrames{512};
 };

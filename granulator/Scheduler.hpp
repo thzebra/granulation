@@ -32,6 +32,7 @@ public:
     virtual void clearGrains();
     virtual const Grain& lastGrainAdded() const;
     virtual const std::deque<Grain> grains() const;
+    virtual void setReadDirection(bool readBackwards);
 
 private:
     mutable std::mutex m_grainsLock;
@@ -39,6 +40,7 @@ private:
     SequenceStrategy* m_strategy;
     void removeCompleted();
     int m_actives{0};
+    bool m_readBackwards{false};
 };
 
 }

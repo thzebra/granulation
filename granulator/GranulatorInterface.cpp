@@ -30,18 +30,18 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_loop{new QCheckBox},
       m_looplabel{new QLabel},
       m_graindisplayview{new GrainDisplayView(this)},
-      m_generateGrains{new QPushButton(tr("Generate..."))}
+      m_generateGrains{new QPushButton(tr("Generate..."))},
+      m_speed{new QSpinBox},
+      m_speedlabel{new QLabel}
 {
     resize(600, 600);
 
     m_capturebutton->setCheckable(true);
 
-    m_grainCount->setMinimum(1);
-    m_grainCount->setMaximum(1000);
+    m_grainCount->setRange(1, 1000);
     m_grainCount->setValue(10);
 
-    m_grainDuration->setMinimum(10);
-    m_grainDuration->setMaximum(10000);
+    m_grainDuration->setRange(10, 600000);
     m_grainDuration->setValue(500);
 
     m_grainDuration->setSuffix(tr(" ms"));
@@ -50,8 +50,7 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_countlabel->setText(tr("Max grains"));
     m_durationlabel->setText(tr("Grain duration"));
 
-    m_density->setMinimum(1);
-    m_density->setMaximum(500);
+    m_density->setRange(1, 50);
     m_density->setValue(100);
     m_densitylabel->setText(tr("Number of grains per second"));
 
@@ -73,6 +72,9 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
 
     m_generateGrains->setCheckable(true);
 
+    m_speed->setRange(-100, 100);
+    m_speedlabel->setText(tr("Speed ratio"));
+
     //m_layout->addWidget(m_drawingArea, 0, 0, 1, 1);
     m_layout->addWidget(m_graindisplayview, 0, 0, 1, 2);
     m_layout->addWidget(m_label, 1, 0);
@@ -92,6 +94,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_layout->addWidget(m_sourcefilename, 9, 0);
     m_layout->addWidget(m_outfilename, 9, 1);
     m_layout->addWidget(m_generateGrains, 10, 0);
+    m_layout->addWidget(m_speedlabel, 11, 0);
+    m_layout->addWidget(m_speed, 11, 1);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);
@@ -131,6 +135,11 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
         granulator->generate(1);
         m_graindisplayview->grainDisplay().addGrain(granulator->lastGrainAdded());
     });
+
+    connect(m_speed,
+            static_cast<void (QSpinBox::*)(int)> (&QSpinBox::valueChanged),
+            [=] (int val) mutable -> void { granulator->setReadDirection(val < 0); }
+    );
 }
 
 GranulatorInterface::~GranulatorInterface()

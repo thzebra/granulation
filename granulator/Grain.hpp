@@ -16,7 +16,7 @@ public:
     ~Grain() = default;
 
     bool completed() const;
-    void activate(int duration);
+    void activate(bool readBackwards);
     float synthetize(bool loop = false);
     void synthetize(gsl::span<float> vec, bool loop = false);
     bool isActive() const;
@@ -45,7 +45,6 @@ private:
     int m_index {0};
     int m_channelindex{0};
     int m_envelopeIndex{0};
-    //int m_duration {0}; // in ms
     bool m_active {false};
     bool m_readBackwards {false};
     bool m_completed {false};

@@ -12,6 +12,7 @@ public:
     void populate() override;
     const unsigned int size() const override;
     float data(int i) const override;
+    gsl::span<const float> data() const override;
     int sampleRate() const override;
     void setSource(std::string filename) override;
     int channels() const override;

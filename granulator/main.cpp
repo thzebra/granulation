@@ -15,6 +15,8 @@
 #include "Essence.hpp"
 #include <chrono>
 #include <sndfile.hh>
+#include <ADSREnvelope.hpp>
+#include <rubberband/RubberBandStretcher.h>
 
 using namespace Granulation;
 using namespace Synthesis;
@@ -38,7 +40,7 @@ int main(int argc, char *argv[])
     for (unsigned int i = 0; i < ndev; ++i) {
         w->m_devices->addItem(QString(api->getDeviceInfo(i).name.c_str()));
     }
-    w->granulator = new Granulator<SinusoidalEnvelope, CustomWindowSource> (w->sourceData(), w->m_grainDuration->value());
+    w->granulator = new Granulator<ADSREnvelope, CustomWindowSource> (w->sourceData(), w->m_grainDuration->value());
     RegularSequenceStrategy strat = RegularSequenceStrategy (w->m_density->value(), w->m_grainDuration->value());
     w->granulator->setStrategy(&strat);
     w->granulator->setMaxGrains(w->m_grainCount->value());

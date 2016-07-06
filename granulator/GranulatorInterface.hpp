@@ -62,6 +62,9 @@ public:
 
     QPushButton* m_generateGrains{};
 
+    QSpinBox* m_speed{};
+    QLabel* m_speedlabel{};
+
     float pan();
     void setPan(float p);
     void addPoint(QPoint);

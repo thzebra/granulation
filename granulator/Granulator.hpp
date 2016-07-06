@@ -105,6 +105,10 @@ public:
         return m_scheduler.grains();
     }
 
+    void setReadDirection(bool readBackwards) override {
+        m_scheduler.setReadDirection(readBackwards);
+    }
+
 private:
     Scheduler m_scheduler;
     Essence<Env, Src> m_essence;

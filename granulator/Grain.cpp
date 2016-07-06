@@ -22,7 +22,6 @@ Grain::Grain(const Grain & grain) :
     m_source{grain.m_source},
     m_envelope{grain.m_envelope},
     m_completed{grain.m_completed}
-    //m_duration{grain.m_duration}
 {
 }
 
@@ -38,7 +37,6 @@ void Grain::operator =(const Grain& grain) {
     m_active = grain.m_active;
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
-    //m_duration = grain.m_duration;
     m_index = grain.m_index;
 }
 
@@ -46,23 +44,12 @@ bool Grain::completed() const {
     return m_completed;
 }
 
-void Grain::activate(int duration) {
-    //qDebug() << "grain is being activated for duration" << duration;
-    if (duration != 0) {
+void Grain::activate(bool readBackwards) {
         m_completed = false;
         m_active = true;
         m_index = 0;
         m_channelindex = 0;
-        //m_duration = std::abs(duration);
-
-        if (duration > 0) {
-            m_readBackwards = false;
-        }
-        else {
-            m_readBackwards = true;
-            //qDebug() << "grain will be read backwards";
-        }
-    }
+        m_readBackwards = readBackwards;
 }
 
 float Grain::synthetize(bool loop) {
@@ -86,8 +73,10 @@ float Grain::synthetize(bool loop) {
     }
 
     int idx = m_index * nc + m_channelindex;
+
     if (m_readBackwards)
         idx = srcs - 1 - idx;
+
     m_channelindex = (m_channelindex + 1) % nc;
     if (m_channelindex == 0)
         ++m_index;
@@ -124,9 +113,12 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
             }
 
             if (!m_completed) {
-                int idx = m_index * nc + m_channelindex;
+
+                int idx = m_channelindex + m_index * nc;
+
                 if (m_readBackwards)
-                    idx = srcs - 1 - idx;
+                    int idx = srcs - 1 - idx;
+
                 m_channelindex = (m_channelindex + 1) % nc;
                 if (m_channelindex == 0)
                     ++m_index;
@@ -153,14 +145,13 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
                     }
                 }
                 if (!m_completed) {
-                    int idx = m_index * nc + m_channelindex;
+                    int idx = m_channelindex + m_index * nc;
 
                     m_channelindex = (m_channelindex + 1) % nc;
                     if (m_channelindex == 0)
                         ++m_index;
 
-                    auto val = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
-                    vec[i] += val;
+                    vec[i] = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
                 }
             }
         }
@@ -181,13 +172,13 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
                 }
 
                 if (!m_completed) {
-                    int idx = srcs - 1 - (m_index * nc + m_channelindex);
+                    int idx = srcs - 1 - (m_channelindex + m_index * nc);
+
+                    vec[i] = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
 
                     m_channelindex = (m_channelindex + 1) % nc;
                     if (m_channelindex == 0)
                         ++m_index;
-
-                    vec[i] += fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
                 }
             }
         }
@@ -209,7 +200,7 @@ std::string Grain::grainToString() const {
     else
         ss << "Inactive, ";
     ss << "index = " << m_index;
-    //ss << ", duration: " << m_duration << "ms";
+    //ss << ", duration: " << m_speed << "ms";
     ss << ", is read " << (m_readBackwards ? "backwards" : "forward");
     ss << ", has " << (m_completed ? "completed" : "not completed yet");
     std::string str = ss.str();

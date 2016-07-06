@@ -6,7 +6,7 @@ namespace Granulation {
 namespace Synthesis {
 
 FileSourceData::FileSourceData() :
-    SourceData(),
+    SourceData(true),
     m_channels{0},
     m_sampleRate{0},
     m_data{std::vector<float> ()}
@@ -20,12 +20,17 @@ void FileSourceData::populate() {
         std::cout << info.format << std::endl;
         m_sampleRate = info.samplerate;
         m_channels = info.channels;
-        m_data.resize(info.frames * info.channels);
+        m_data.resize((info.frames + 4096) * info.channels);
         int16_t samples[info.channels];
         for (int i = 0; i < info.frames; ++i) {
             sf_readf_short(file, samples, 1);
             for (int j = 0; j < info.channels; ++j) {
                 m_data[i * info.channels + j] = (float)samples[j] / 32768.f;
+            }
+        }
+        for (int i = 0; i < 4096; ++i) { // allow overflow to simulate wrapping for the audio buffer
+            for (int j = 0; j < info.channels; ++j) {
+                m_data[(i + info.frames) * info.channels + j] = m_data[i * info.channels + j];
             }
         }
 
@@ -41,8 +46,12 @@ float FileSourceData::data(int i) const {
     return m_data[i];
 }
 
+gsl::span<const float> FileSourceData::data() const {
+    return m_data;
+}
+
 const unsigned int FileSourceData::size() const {
-    return m_data.size();
+    return m_data.size() - 4096;
 }
 
 int FileSourceData::sampleRate() const {

@@ -10,9 +10,10 @@ class Envelope {
 public:
     Envelope() = default;
 
-    Envelope(int64_t length)
+    Envelope(int64_t length, int sampleRate = 44100)
     {
         m_data.resize(length);
+        m_sampleRate = sampleRate;
     }
 
     Envelope(const Envelope& env):
@@ -43,7 +44,7 @@ public:
     }
 
     virtual void fill() = 0;
-    virtual void setADSR(int attms, int decms, int susms, int relms, int samplerate) {}
+    virtual void setADSR(int attms, int decms, int susms, int relms, int samplerate);
 
     virtual void recompute(int64_t length) = 0;
 
@@ -51,7 +52,13 @@ public:
 
 protected:
     std::vector<float> m_data;
+
+    int m_attack{50};
+    int m_decay{0};
+    int m_release{50};
+    int m_sampleRate{44100};
 };
+
 
 
 }

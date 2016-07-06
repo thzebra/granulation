@@ -21,7 +21,7 @@ public:
     {}
 
     virtual Grain makeGrain() override {
-        return {std::make_shared<Env>(m_length), std::make_shared<Src>(m_rawdata, m_length, m_begin)};
+        return {std::make_shared<Env>(m_length, m_rawdata->sampleRate()), std::make_shared<Src>(m_rawdata, m_length, m_begin)};
     }
 
     virtual int channels() const override {
