@@ -10,6 +10,13 @@ const bool SourceData::allowsOverflow() const {
     return m_allowoverflow;
 }
 
+int SourceData::overflowSize() const {
+    if (allowsOverflow())
+        return 4096;
+    else
+        return 0;
+}
+
 gsl::span<const float> SourceData::data() const {
     return {};
 }

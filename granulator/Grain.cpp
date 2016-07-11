@@ -2,17 +2,23 @@
 #include <cmath>
 #include <QDebug>
 #include <sstream>
+#include <iostream>
 
 namespace Granulation {
 namespace Synthesis {
 
+using namespace RubberBand;
+
 //Grain::Grain() {}
 
-Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s) :
+Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s, double timeratio, double pitchscale) :
     m_source{s},
-    m_envelope{e}
+    m_envelope{e},
+    m_timeRatio{timeratio},
+    m_pitchScale{pitchscale},
+    m_rbs{s->sampleRate(), s->channels(), RubberBandStretcher::OptionProcessRealTime, timeratio, pitchscale}
 {
-    //qDebug() << "grain size" << size() << "env size" << m_envelope->size() << "src size" << m_source->size() << m_source->channels();
+    //deinterleave();
 }
 
 Grain::Grain(const Grain & grain) :
@@ -20,9 +26,18 @@ Grain::Grain(const Grain & grain) :
     m_readBackwards{grain.m_readBackwards},
     m_index{grain.m_index},
     m_source{grain.m_source},
+    m_sourceSize{grain.m_sourceSize},
+    m_sourceChannels{grain.m_sourceChannels},
     m_envelope{grain.m_envelope},
-    m_completed{grain.m_completed}
+    m_envelopeSize{grain.m_envelopeSize},
+    m_completed{grain.m_completed},
+    m_pitchScale{grain.m_pitchScale},
+    m_timeRatio{grain.m_timeRatio},
+    m_rbs{m_source->sampleRate(), m_source->channels(),
+          RubberBandStretcher::OptionProcessRealTime,
+          grain.m_timeRatio, grain.m_pitchScale}
 {
+    //deinterleave();
 }
 
 void Grain::operator =(const Grain& grain) {
@@ -38,6 +53,8 @@ void Grain::operator =(const Grain& grain) {
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
     m_index = grain.m_index;
+    m_rbs = RubberBandStretcher(sampleRate(), channels(), RubberBandStretcher::OptionProcessRealTime, grain.getTimeRatio(), grain.getPitchScale());
+    deinterleave();
 }
 
 bool Grain::completed() const {
@@ -80,7 +97,6 @@ float Grain::synthetize(bool loop) {
     m_channelindex = (m_channelindex + 1) % nc;
     if (m_channelindex == 0)
         ++m_index;
-
     return source.data(idx) * envelope.data(m_envelopeIndex++ % m_envelopeSize);
 }
 
@@ -92,14 +108,17 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
     const auto& envelope = m_envelope->data();
 
     const int nc = m_sourceChannels;
+    if (nc == 0)
+        return;
+
     const int srcs = m_sourceSize;
 
-    const int inputSize = vec.size();
+    const int nOutFrames = vec.size();
 
     auto fast_data = source.data();
     if(fast_data.empty())
     {
-        for(int i = 0; i < inputSize && !m_completed; i++)
+        for(int i = 0; i < nOutFrames && !m_completed; i++)
         {
             if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
                 if (loop) {
@@ -128,36 +147,73 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
         }
     }
     else
-    {
+    {   
         if(!m_readBackwards)
         {
-            // This should be the most taken branch
-            for(int i = 0; i < inputSize && !m_completed; ++i)
-            {
-                if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
-                    if (loop) {
-                        m_index = 0;
-                        m_channelindex = 0;
-                    }
-                    else {
-                        m_completed = true;
-                        markRemove();
-                    }
-                }
-                if (!m_completed) {
-                    int idx = m_channelindex + m_index * nc;
 
-                    m_channelindex = (m_channelindex + 1) % nc;
-                    if (m_channelindex == 0)
-                        ++m_index;
+//            qDebug() << m_rbs.available() << "frames available,"
+//                     << nOutFrames << "needed in out buffer";
+//            qDebug() << "latency:" << m_rbs.getLatency();
+//            qDebug() << m_rbs.getSamplesRequired() << "samples required";
 
-                    vec[i] = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+            const int nOutFramesChan = (const int) (nOutFrames / nc);
+            while (m_rbs.available() < nOutFrames) {
+                int nNeededFrames = std::min(nOutFrames, int(m_rbs.getSamplesRequired()));
+                if (nNeededFrames > 0) {
+                    float * toProcess[nc];
+                    for (int i = 0; i < nc; ++i) {
+                        toProcess[i] = (float *) calloc(nOutFramesChan, sizeof(float));
+                    }
+                    for (int j = 0; j < nOutFrames; ++j) {
+                        for (int i = 0; i < nc; ++i)
+                            toProcess[i][j] = source.data(m_index + j * nc + i) * envelope[m_envelopeIndex];
+                        m_envelopeIndex = (m_envelopeIndex + 1) % m_envelopeSize;
+                    }
+                    m_rbs.process(toProcess, nNeededFrames, false);
+                    m_index = (m_index + nNeededFrames) % m_envelopeSize;
+                    //qDebug() << "available:" << m_rbs.available();
+
                 }
             }
+
+            float * output[nc];
+            for (int i = 0; i < nc; ++i)
+                output[i] = (float*)calloc(nOutFrames, sizeof(float));
+
+            int retrieved = m_rbs.retrieve(output, nOutFrames);
+            for (int i = 0; i < nc; ++i) {
+                for (int j = 0; j < nOutFramesChan; ++j) {
+                    vec[j * nc + i] = output[nc][j];
+                }
+            }
+
+            // This should be the most taken branch
+//            for(int i = 0; i < nOutFrames && !m_completed; ++i)
+//            {
+//                if (m_index * nc + m_channelindex >= srcs || m_index < 0) {
+//                    if (loop) {
+//                        m_index = 0;
+//                        m_channelindex = 0;
+//                    }
+//                    else {
+//                        m_completed = true;
+//                        markRemove();
+//                    }
+//                }
+//                if (!m_completed) {
+//                    int idx = m_channelindex + m_index * nc;
+
+//                    m_channelindex = (m_channelindex + 1) % nc;
+//                    if (m_channelindex == 0)
+//                        ++m_index;
+
+//                    vec[i] = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
+//                }
+//            }
         }
         else
         {
-            for(int i = 0; i < inputSize && !m_completed; i++)
+            for(int i = 0; i < nOutFrames && !m_completed; i++)
             {
                 if (m_index * nc + m_channelindex >= srcs || m_index < 0)
                 {
@@ -254,6 +310,44 @@ int Grain::sampleRate() const {
 
 int Grain::currentIndex() const {
     return m_envelopeIndex;
+}
+
+double Grain::getPitchScale() const {
+    return m_pitchScale;
+}
+
+double Grain::getTimeRatio() const {
+    return m_timeRatio;
+}
+
+void Grain::setPitchScale(double pitchscale) {
+    m_pitchScale = pitchscale;
+    m_rbs.setPitchScale(pitchscale);
+}
+
+void Grain::setTimeRatio(double timeratio) {
+    m_timeRatio = timeratio;
+    m_rbs.setTimeRatio(timeratio);
+}
+
+void Grain::deinterleave() {
+    int nc = channels();
+    m_deinterleavedSource.resize(nc);
+
+    const Source& src = *m_source;
+    const Envelope& env = *m_envelope;
+    int envsize = env.size();
+
+    auto chansize = size() + src.rawData().overflowSize();
+    for (int i = 0; i < nc; ++i) {
+        m_deinterleavedSource[i].resize(chansize);
+    }
+
+    for (int i = 0; i < chansize; ++i) {
+        for (int j = 0; j < nc; ++j) {
+            m_deinterleavedSource[j][i] = src.data(i * nc + j) * env.data(i % envsize);
+        }
+    }
 }
 
 }

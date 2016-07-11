@@ -17,6 +17,7 @@
 #include <sndfile.hh>
 #include <ADSREnvelope.hpp>
 #include <rubberband/RubberBandStretcher.h>
+#include <cmath>
 
 using namespace Granulation;
 using namespace Synthesis;
@@ -27,6 +28,15 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             double streamTime, RtAudioStreamStatus status, void *userData);
 QString format2QString(const RtAudioFormat& f);
 int outindex = 0;
+
+//// test stuff
+//float * sinus[2];
+//int procidx = 0;
+//int sinussize = 65536;
+//int freq = 1000;
+//int fe = 48000;
+//RubberBand::RubberBandStretcher* rbs_t;
+
 
 int main(int argc, char *argv[])
 {
@@ -61,7 +71,14 @@ int main(int argc, char *argv[])
 
     QWidget::connect(&application, &QApplication::aboutToQuit, [=] () { delete api; });
 
-        return application.exec();
+//    for (int i = 0; i < 2; ++i) {
+//        sinus[i] = (float*) calloc(sinussize, sizeof(float));
+//        for (int j = 0; j < sinussize; ++j)
+//            sinus[i][j] = std::sin(j * 2 * M_PI * (double)freq / (double)fe);
+//    }
+//    rbs_t = new RubberBand::RubberBandStretcher (fe, 2, RubberBand::RubberBandStretcher::OptionProcessRealTime);
+
+    return application.exec();
 }
 
 QString typeToQString(const RtAudioError::Type t) {
@@ -180,6 +197,39 @@ int output(void *outputBuffer, void *inputBuffer, unsigned int nFrames,
             g->generate(1);
         }
     }
+
+//    float * out = (float *)outputBuffer;
+
+//    while (rbs_t->available() < nFrames) {
+//        int req = rbs_t->getSamplesRequired();
+
+//        float * toProcess[2];
+//        toProcess[0] = sinus[0] + procidx;
+//        toProcess[1] = sinus[1] + procidx;
+
+//        rbs_t->process(toProcess, req, false);
+//        procidx += req;
+//        if (procidx >= sinussize) {
+//            procidx %= sinussize;
+//            rbs_t->setTimeRatio(rbs_t->getTimeRatio() + 0.5);
+//        }
+//    }
+
+//    float * output[2];
+//    output[0] = (float*) calloc(nFrames, sizeof(float));
+//    output[1] = (float*) calloc(nFrames, sizeof(float));
+
+//    //qDebug() << typeid(output[0]).name() << typeid(output[1]).name();
+
+//    int ret = rbs_t->retrieve(output, nFrames);
+//    //qDebug() << "got" << ret << "samples";
+
+//    for (int i = 0; i < nFrames; ++i)
+//        out[i] = output[i % 2][i / 2];
+
+//    free(output[0]);
+//    free(output[1]);
+
     return 0;
 }
 

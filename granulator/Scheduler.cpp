@@ -7,6 +7,8 @@
 namespace Granulation {
 namespace Synthesis {
 
+using namespace RubberBand;
+
 Scheduler::Scheduler() {}
 
 Scheduler::Scheduler(SequenceStrategy *strategy) :

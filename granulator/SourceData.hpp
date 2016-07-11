@@ -10,6 +10,7 @@ class SourceData
 public:
     SourceData(bool allowOverflow = false);
     const bool allowsOverflow() const;
+    int overflowSize() const;
     virtual void populate() = 0;
     virtual const unsigned int size() const = 0;
     virtual float data(int i) const = 0;

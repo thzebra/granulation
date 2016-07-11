@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <span.h>
+#include <rubberband/RubberBandStretcher.h>
 
 namespace Granulation {
 namespace Synthesis {
@@ -11,7 +12,7 @@ namespace Synthesis {
 class Grain {
 public:
     //Grain();
-    Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s);
+    Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s, double timeratio = 1.0, double pitchscale = 1.0);
     Grain(const Grain&);
     ~Grain() = default;
 
@@ -34,6 +35,12 @@ public:
 
     void resize(int newsize);
 
+    double getPitchScale() const;
+    double getTimeRatio() const;
+
+    void setPitchScale(double pitchscale);
+    void setTimeRatio(double timeratio);
+
 private:
     std::shared_ptr<Envelope> m_envelope;
     std::shared_ptr<Source> m_source;
@@ -42,6 +49,9 @@ private:
     int m_sourceSize{m_source->size()};
     int m_envelopeSize{m_envelope->size()};
 
+    std::vector<std::vector<float>> m_deinterleavedSource{};
+    void deinterleave();
+
     int m_index {0};
     int m_channelindex{0};
     int m_envelopeIndex{0};
@@ -49,6 +59,10 @@ private:
     bool m_readBackwards {false};
     bool m_completed {false};
     bool m_toRemove{false};
+
+    RubberBand::RubberBandStretcher m_rbs;
+    double m_pitchScale{1.f};
+    double m_timeRatio{1.f};
 };
 
 

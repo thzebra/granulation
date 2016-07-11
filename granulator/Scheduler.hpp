@@ -5,6 +5,7 @@
 #include "Essence.hpp"
 #include <span.h>
 #include <mutex>
+#include <rubberband/RubberBandStretcher.h>
 
 namespace Granulation {
 namespace Synthesis {

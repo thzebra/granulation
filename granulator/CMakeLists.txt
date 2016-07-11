@@ -64,5 +64,5 @@ set (SOURCES
 add_executable(${EXECNAME} ${HEADERS} ${SOURCES})
 set_target_properties(${EXECNAME} PROPERTIES CXX_STANDARD 14)
 # target_compile_options(${EXECNAME} PUBLIC -Og)
-target_link_libraries(${EXECNAME} PUBLIC Qt5::Core Qt5::Widgets Qt5::Multimedia m rtaudio sndfile)
+target_link_libraries(${EXECNAME} PUBLIC Qt5::Core Qt5::Widgets Qt5::Multimedia m rtaudio sndfile rubberband)
 target_include_directories(${EXECNAME} PUBLIC GSL/include)
