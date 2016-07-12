@@ -60,7 +60,7 @@ private:
     bool m_completed {false};
     bool m_toRemove{false};
 
-    RubberBand::RubberBandStretcher m_rbs;
+    std::shared_ptr<RubberBand::RubberBandStretcher> m_rbs{};
     double m_pitchScale{1.f};
     double m_timeRatio{1.f};
 };

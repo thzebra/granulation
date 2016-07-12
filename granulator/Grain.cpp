@@ -16,7 +16,7 @@ Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s, double time
     m_envelope{e},
     m_timeRatio{timeratio},
     m_pitchScale{pitchscale},
-    m_rbs{s->sampleRate(), s->channels(), RubberBandStretcher::OptionProcessRealTime, timeratio, pitchscale}
+    m_rbs{new RubberBandStretcher(s->sampleRate(), s->channels(), RubberBandStretcher::OptionProcessRealTime, timeratio, pitchscale)}
 {
     //deinterleave();
 }
@@ -33,12 +33,8 @@ Grain::Grain(const Grain & grain) :
     m_completed{grain.m_completed},
     m_pitchScale{grain.m_pitchScale},
     m_timeRatio{grain.m_timeRatio},
-    m_rbs{m_source->sampleRate(), m_source->channels(),
-          RubberBandStretcher::OptionProcessRealTime,
-          grain.m_timeRatio, grain.m_pitchScale}
-{
-    //deinterleave();
-}
+    m_rbs{grain.m_rbs}
+{}
 
 void Grain::operator =(const Grain& grain) {
 
@@ -53,7 +49,7 @@ void Grain::operator =(const Grain& grain) {
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
     m_index = grain.m_index;
-    m_rbs = RubberBandStretcher(sampleRate(), channels(), RubberBandStretcher::OptionProcessRealTime, grain.getTimeRatio(), grain.getPitchScale());
+    m_rbs = grain.m_rbs;
     deinterleave();
 }
 
@@ -157,8 +153,8 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
 //            qDebug() << m_rbs.getSamplesRequired() << "samples required";
 
             const int nOutFramesChan = (const int) (nOutFrames / nc);
-            while (m_rbs.available() < nOutFrames) {
-                int nNeededFrames = std::min(nOutFrames, int(m_rbs.getSamplesRequired()));
+            while (m_rbs->available() < nOutFrames) {
+                int nNeededFrames = std::min(nOutFrames, int(m_rbs->getSamplesRequired()));
                 if (nNeededFrames > 0) {
                     float * toProcess[nc];
                     for (int i = 0; i < nc; ++i) {
@@ -169,7 +165,7 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
                             toProcess[i][j] = source.data(m_index + j * nc + i) * envelope[m_envelopeIndex];
                         m_envelopeIndex = (m_envelopeIndex + 1) % m_envelopeSize;
                     }
-                    m_rbs.process(toProcess, nNeededFrames, false);
+                    m_rbs->process(toProcess, nNeededFrames, false);
                     m_index = (m_index + nNeededFrames) % m_envelopeSize;
                     //qDebug() << "available:" << m_rbs.available();
 
@@ -180,7 +176,8 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
             for (int i = 0; i < nc; ++i)
                 output[i] = (float*)calloc(nOutFrames, sizeof(float));
 
-            int retrieved = m_rbs.retrieve(output, nOutFrames);
+            int retrieved = m_rbs->retrieve(output, nOutFrames);
+            std::cout << retrieved << std::endl;
             for (int i = 0; i < nc; ++i) {
                 for (int j = 0; j < nOutFramesChan; ++j) {
                     vec[j * nc + i] = output[nc][j];
@@ -322,12 +319,12 @@ double Grain::getTimeRatio() const {
 
 void Grain::setPitchScale(double pitchscale) {
     m_pitchScale = pitchscale;
-    m_rbs.setPitchScale(pitchscale);
+    m_rbs->setPitchScale(pitchscale);
 }
 
 void Grain::setTimeRatio(double timeratio) {
     m_timeRatio = timeratio;
-    m_rbs.setTimeRatio(timeratio);
+    m_rbs->setTimeRatio(timeratio);
 }
 
 void Grain::deinterleave() {
