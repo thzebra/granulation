@@ -101,7 +101,7 @@ public:
         m_essence.setBegin(begin);
     }
 
-    const std::deque<Grain> grains() const override {
+    const std::deque<Grain>& grains() const override {
         return m_scheduler.grains();
     }
 

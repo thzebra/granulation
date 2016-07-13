@@ -145,7 +145,7 @@ const Grain& Scheduler::lastGrainAdded() const {
         return m_grains.back();
 }
 
-const std::deque<Grain> Scheduler::grains() const {
+const std::deque<Grain>& Scheduler::grains() const {
     return m_grains;
 }
 

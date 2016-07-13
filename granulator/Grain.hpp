@@ -49,9 +49,6 @@ private:
     int m_sourceSize{m_source->size()};
     int m_envelopeSize{m_envelope->size()};
 
-    std::vector<std::vector<float>> m_deinterleavedSource{};
-    void deinterleave();
-
     int m_index {0};
     int m_channelindex{0};
     int m_envelopeIndex{0};
@@ -60,9 +57,9 @@ private:
     bool m_completed {false};
     bool m_toRemove{false};
 
-    std::shared_ptr<RubberBand::RubberBandStretcher> m_rbs{};
     double m_pitchScale{1.f};
     double m_timeRatio{1.f};
+    std::shared_ptr<RubberBand::RubberBandStretcher> m_rbs{};
 };
 
 

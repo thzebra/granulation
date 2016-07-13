@@ -378,12 +378,12 @@ void GrainDisplay::addGrain(const Synthesis::Grain& grain) {
     drawGrain(item, m_zoom);
 }
 
-void GrainDisplay::setGrains(std::deque<Synthesis::Grain> grains) {
+void GrainDisplay::setGrains(const std::deque<Synthesis::Grain>& grains) {
     m_lock.lock();
     m_grains.clear();
     m_grainsPaths.clear();
     m_indexPaths.clear();
-    for (auto grain: grains) {
+    for (const Synthesis::Grain& grain: grains) {
         addGrain(grain);
     }
     m_lock.unlock();

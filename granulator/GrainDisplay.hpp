@@ -43,7 +43,7 @@ public:
     void resize(const qreal& w, const qreal& h);
     void resize(const QSize& size);
 
-    void setGrains(std::deque<Synthesis::Grain> grains);
+    void setGrains(const std::deque<Synthesis::Grain>& grains);
     void addGrain(const Synthesis::Grain &grain);
 
     void advanceIndices(int nsamples);

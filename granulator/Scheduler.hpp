@@ -32,7 +32,7 @@ public:
     virtual void setInteronset(int i);
     virtual void clearGrains();
     virtual const Grain& lastGrainAdded() const;
-    virtual const std::deque<Grain> grains() const;
+    virtual const std::deque<Grain>& grains() const;
     virtual void setReadDirection(bool readBackwards);
 
 private:

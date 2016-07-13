@@ -15,10 +15,11 @@ Grain::Grain(std::shared_ptr<Envelope> e, std::shared_ptr<Source> s, double time
     m_source{s},
     m_envelope{e},
     m_timeRatio{timeratio},
-    m_pitchScale{pitchscale},
-    m_rbs{new RubberBandStretcher(s->sampleRate(), s->channels(), RubberBandStretcher::OptionProcessRealTime, timeratio, pitchscale)}
+    m_pitchScale{pitchscale}
 {
-    //deinterleave();
+    m_sourceChannels = m_source->channels();
+    m_sourceSize = m_source->size();
+    m_rbs = std::make_shared<RubberBandStretcher> (s->sampleRate(), s->channels(), RubberBandStretcher::OptionProcessRealTime, timeratio, pitchscale);
 }
 
 Grain::Grain(const Grain & grain) :
@@ -44,13 +45,13 @@ void Grain::operator =(const Grain& grain) {
     m_sourceChannels = grain.m_sourceChannels;
     m_sourceSize = grain.m_sourceSize;
     m_envelopeSize = grain.m_envelopeSize;
+    m_envelopeIndex = grain.m_envelopeIndex;
 
     m_active = grain.m_active;
     m_readBackwards = grain.m_readBackwards;
     m_completed = grain.m_completed;
     m_index = grain.m_index;
     m_rbs = grain.m_rbs;
-    deinterleave();
 }
 
 bool Grain::completed() const {
@@ -98,6 +99,7 @@ float Grain::synthetize(bool loop) {
 
 
 void Grain::synthetize(gsl::span<float> vec, bool loop) {
+
     // Chaque appel à un std::shared_ptr<>-> fait un load et implique une mutex, donc
     // on les charge une fois au début
     const Source& source = *m_source;
@@ -153,34 +155,34 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
 //            qDebug() << m_rbs.getSamplesRequired() << "samples required";
 
             const int nOutFramesChan = (const int) (nOutFrames / nc);
+            float ** toProcess = (float**)alloca(sizeof(float *) * nc);
+            float ** output = (float**)alloca(sizeof(float *) * nc);
+
             while (m_rbs->available() < nOutFrames) {
-                int nNeededFrames = std::min(nOutFrames, int(m_rbs->getSamplesRequired()));
+                int nNeededFrames = m_rbs->getSamplesRequired();
+
                 if (nNeededFrames > 0) {
-                    float * toProcess[nc];
                     for (int i = 0; i < nc; ++i) {
-                        toProcess[i] = (float *) calloc(nOutFramesChan, sizeof(float));
-                    }
-                    for (int j = 0; j < nOutFrames; ++j) {
-                        for (int i = 0; i < nc; ++i)
-                            toProcess[i][j] = source.data(m_index + j * nc + i) * envelope[m_envelopeIndex];
-                        m_envelopeIndex = (m_envelopeIndex + 1) % m_envelopeSize;
+                        std::vector<float> dummy (nNeededFrames);
+                        for (int j = 0; j < nNeededFrames; ++j) {
+                            dummy[j] = source.data((j + m_index) * nc + i) * envelope[m_envelopeIndex + j];
+                        }
+                        toProcess[i] = dummy.data();
                     }
                     m_rbs->process(toProcess, nNeededFrames, false);
                     m_index = (m_index + nNeededFrames) % m_envelopeSize;
-                    //qDebug() << "available:" << m_rbs.available();
-
+                    m_envelopeIndex = m_index;
                 }
             }
 
-            float * output[nc];
-            for (int i = 0; i < nc; ++i)
-                output[i] = (float*)calloc(nOutFrames, sizeof(float));
+            for (int i = 0; i < nc; ++i) {
+                output[i] = (float*) alloca(nOutFramesChan * sizeof(float));
+            }
 
-            int retrieved = m_rbs->retrieve(output, nOutFrames);
-            std::cout << retrieved << std::endl;
+            int retrieved = m_rbs->retrieve(output, nOutFramesChan);
             for (int i = 0; i < nc; ++i) {
                 for (int j = 0; j < nOutFramesChan; ++j) {
-                    vec[j * nc + i] = output[nc][j];
+                    vec[j * nc + i] = output[i][j];
                 }
             }
 
@@ -327,25 +329,25 @@ void Grain::setTimeRatio(double timeratio) {
     m_rbs->setTimeRatio(timeratio);
 }
 
-void Grain::deinterleave() {
-    int nc = channels();
-    m_deinterleavedSource.resize(nc);
+//void Grain::deinterleave() {
+//    int nc = channels();
+//    m_deinterleavedSource.resize(nc);
 
-    const Source& src = *m_source;
-    const Envelope& env = *m_envelope;
-    int envsize = env.size();
+//    const Source& src = *m_source;
+//    const Envelope& env = *m_envelope;
+//    int envsize = env.size();
 
-    auto chansize = size() + src.rawData().overflowSize();
-    for (int i = 0; i < nc; ++i) {
-        m_deinterleavedSource[i].resize(chansize);
-    }
+//    auto chansize = size() + src.rawData().overflowSize();
+//    for (int i = 0; i < nc; ++i) {
+//        m_deinterleavedSource[i].resize(chansize);
+//    }
 
-    for (int i = 0; i < chansize; ++i) {
-        for (int j = 0; j < nc; ++j) {
-            m_deinterleavedSource[j][i] = src.data(i * nc + j) * env.data(i % envsize);
-        }
-    }
-}
+//    for (int i = 0; i < chansize; ++i) {
+//        for (int j = 0; j < nc; ++j) {
+//            m_deinterleavedSource[j][i] = src.data(i * nc + j) * env.data(i % envsize);
+//        }
+//    }
+//}
 
 }
 }
