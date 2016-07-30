@@ -9,7 +9,6 @@ public:
     SinusoidalEnvelope();
     SinusoidalEnvelope(int64_t length, int sampleRate);
     void fill() override;
-    void recompute(int64_t length) override;
     ~SinusoidalEnvelope() = default;
 };
 

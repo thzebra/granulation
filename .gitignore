@@ -37,3 +37,7 @@ Makefile*
 #QtCtreator Qml
 *.qmlproject.user
 *.qmlproject.user.*
+
+# Documentation output files
+doc/html/
+doc/latex/

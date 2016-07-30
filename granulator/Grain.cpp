@@ -61,9 +61,12 @@ bool Grain::completed() const {
 void Grain::activate(bool readBackwards) {
         m_completed = false;
         m_active = true;
-        m_index = 0;
         m_channelindex = 0;
         m_readBackwards = readBackwards;
+        if (m_readBackwards && channels() > 0)
+            m_index = m_sourceSize / channels();
+        else
+            m_index = 0;
 }
 
 float Grain::synthetize(bool loop) {
@@ -106,7 +109,7 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
     const auto& envelope = m_envelope->data();
 
     const int nc = m_sourceChannels;
-    if (nc == 0)
+    if (nc == 0 || size() == 0)
         return;
 
     const int srcs = m_sourceSize;
@@ -165,13 +168,21 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
                     for (int i = 0; i < nc; ++i) {
                         std::vector<float> dummy (nNeededFrames);
                         for (int j = 0; j < nNeededFrames; ++j) {
-                            dummy[j] = source.data((j + m_index) * nc + i) * envelope[m_envelopeIndex + j];
+                            if (m_index + j >= size() && !loop) {
+                                this->m_completed = true;
+                                markRemove();
+                            }
+
+                            if (completed())
+                                dummy[j] = 0;
+                            else
+                                dummy[j] = source.data((j + m_index) * nc + i) * envelope[m_envelopeIndex + j];
                         }
                         toProcess[i] = dummy.data();
                     }
                     m_rbs->process(toProcess, nNeededFrames, false);
-                    m_index = (m_index + nNeededFrames) % m_envelopeSize;
-                    m_envelopeIndex = m_index;
+                    m_index = (m_index + nNeededFrames) % size();
+                    m_envelopeIndex += nNeededFrames;
                 }
             }
 
@@ -212,31 +223,48 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
         }
         else
         {
-            for(int i = 0; i < nOutFrames && !m_completed; i++)
-            {
-                if (m_index * nc + m_channelindex >= srcs || m_index < 0)
-                {
-                    if (loop) {
-                        m_index = 0;
-                        m_channelindex = 0;
+            const int nOutFramesChan = (const int) (nOutFrames / nc);
+            float ** toProcess = (float**)alloca(sizeof(float *) * nc);
+            float ** output = (float**)alloca(sizeof(float *) * nc);
+
+            while (m_rbs->available() < nOutFrames) {
+                int nNeededFrames = m_rbs->getSamplesRequired();
+                int overflow = source.rawData().overflowSize();
+
+                if (nNeededFrames > 0) {
+                    for (int i = 0; i < nc; ++i) {
+                        std::vector<float> dummy (nNeededFrames);
+                        for (int j = 0; j < nNeededFrames; ++j) {
+                            if (m_index - j < 0) {
+                                m_completed = true;
+                                markRemove();
+                            }
+
+                            if (completed())
+                                dummy[j] = 0;
+                            else
+                                dummy[j] = source.data((((m_index - j) % size()) - overflow) * nc + i) * envelope[m_envelopeIndex + j];
+                        }
+                        toProcess[i] = dummy.data();
                     }
-                    else {
-                        m_completed = true;
-                        markRemove();
-                    }
+                    m_rbs->process(toProcess, nNeededFrames, false);
+                    m_index = (m_index - nNeededFrames) % m_envelopeSize;
+                    m_envelopeIndex = (m_envelopeIndex + 1) % m_envelopeSize;
                 }
+            }
 
-                if (!m_completed) {
-                    int idx = srcs - 1 - (m_channelindex + m_index * nc);
+            for (int i = 0; i < nc; ++i) {
+                output[i] = (float*) alloca(nOutFramesChan * sizeof(float));
+            }
 
-                    vec[i] = fast_data[idx] * envelope[m_envelopeIndex++ % m_envelopeSize];
-
-                    m_channelindex = (m_channelindex + 1) % nc;
-                    if (m_channelindex == 0)
-                        ++m_index;
+            int retrieved = m_rbs->retrieve(output, nOutFramesChan);
+            for (int i = 0; i < nc; ++i) {
+                for (int j = 0; j < nOutFramesChan; ++j) {
+                    vec[j * nc + i] = output[i][j];
                 }
             }
         }
+
     }
 }
 
@@ -282,10 +310,7 @@ unsigned int Grain::beginning() const {
 }
 
 unsigned int Grain::size() const {
-    if (m_source == nullptr)
-        return 0;
-    int nch = m_source->channels();
-    nch > 0 ? m_source->size() / nch : 0;
+    return m_envelopeSize;
 }
 
 void Grain::resize(int newsize) {

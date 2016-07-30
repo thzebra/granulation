@@ -8,9 +8,27 @@
 namespace Granulation {
 namespace Synthesis {
 
+/**
+ * @brief The CustomWindowSource class defines a type of Source where the length and
+ * beginning can be defined by the user.
+ */
+
 class CustomWindowSource : public Source {
 public:
+
+    /**
+     * @brief Default constructor that does nothing
+     */
+
     CustomWindowSource();
+
+    /**
+     * @brief Constructor
+     * @param source: a shared_pointer to the SourceData to sample
+     * @param length: the length in samples
+     * @param begin: the position of the first sample of the window in the SourceData
+     */
+
     CustomWindowSource(std::shared_ptr<SourceData> source, int length, int begin);
 
     // Source interface

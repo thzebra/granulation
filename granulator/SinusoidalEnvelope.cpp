@@ -18,11 +18,5 @@ void SinusoidalEnvelope::fill() {
         m_data[i] = std::sin(M_PI * i / s);
 }
 
-void SinusoidalEnvelope::recompute(int64_t length) {
-    m_data.clear();
-    m_data.resize(length);
-    fill();
-}
-
 }
 }

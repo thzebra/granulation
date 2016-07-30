@@ -53,6 +53,11 @@ float Scheduler::synthetize(int maxgrains, bool loop) {
 void Scheduler::synthetize(gsl::span<float> vec, int maxgrains, bool loop) {
     std::lock_guard<std::mutex> lock(m_grainsLock);
 
+    /*
+     * Remove grains that are marked as toRemove, ie grains that are finished
+     * or that have been replaced by newer grains
+     */
+
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
         m_grains.pop_front();
         --m_actives;
@@ -110,8 +115,10 @@ void Scheduler::activateNext() {
     if (it != m_grains.end()) {
         it->activate(m_readBackwards);
         ++m_actives;
-        int mslength = (it->size() / it->channels()) / (it->sampleRate() / 1000.f);
+        int mslength = it->size() / (it->sampleRate() / 1000.f);
         setInteronset(mslength / 2);
+        qDebug() << m_actives << "grains active";
+        qDebug() << "current grain has duration" << mslength << "ms so next grain will be activated in" << mslength / 2 << "ms";
     }
 }
 

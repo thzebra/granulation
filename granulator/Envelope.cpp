@@ -18,5 +18,11 @@ void Envelope::setADSR(int attms, int decms, int susms, int relms, int samplerat
     recompute(length);
 }
 
+void Envelope::recompute(int64_t length) {
+    m_data.clear();
+    m_data.resize(length);
+    fill();
+}
+
 }
 }

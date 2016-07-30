@@ -51,11 +51,5 @@ void ADSREnvelope::fill() {
     }
 }
 
-void ADSREnvelope::recompute(int64_t length) {
-    m_data.clear();
-    m_data.resize(length);
-    fill();
-}
-
 }
 }

@@ -64,6 +64,8 @@ public:
 
     QSpinBox* m_speed{};
     QLabel* m_speedlabel{};
+    QSpinBox* m_pitch{};
+    QLabel* m_pitchlabel{};
 
     float pan();
     void setPan(float p);

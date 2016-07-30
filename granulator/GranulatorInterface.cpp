@@ -32,7 +32,9 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
       m_graindisplayview{new GrainDisplayView(this)},
       m_generateGrains{new QPushButton(tr("Generate..."))},
       m_speed{new QSpinBox},
-      m_speedlabel{new QLabel}
+      m_speedlabel{new QLabel},
+      m_pitch{new QSpinBox},
+      m_pitchlabel{new QLabel}
 {
     resize(600, 600);
 
@@ -74,6 +76,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
 
     m_speed->setRange(-100, 100);
     m_speedlabel->setText(tr("Speed ratio"));
+    m_pitch->setRange(-24, 24);
+    m_pitchlabel->setText(tr("Pitch shift"));
 
     //m_layout->addWidget(m_drawingArea, 0, 0, 1, 1);
     m_layout->addWidget(m_graindisplayview, 0, 0, 1, 2);
@@ -96,6 +100,8 @@ GranulatorInterface::GranulatorInterface(QWidget *parent)
     m_layout->addWidget(m_generateGrains, 10, 0);
     m_layout->addWidget(m_speedlabel, 11, 0);
     m_layout->addWidget(m_speed, 11, 1);
+    m_layout->addWidget(m_pitchlabel, 12, 0);
+    m_layout->addWidget(m_pitch, 12, 1);
 
     m_central->setLayout(m_layout);
     this->setCentralWidget(m_central);

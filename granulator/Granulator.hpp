@@ -33,6 +33,7 @@ public:
     virtual void synthetize(gsl::span<float> vec, bool loop = false) override {
         m_scheduler.synthetize(vec, m_maxgrains, loop);
     }
+
     virtual void generate(int n) override {
         for (int i = 0; i < n; ++i) {
             m_scheduler.addGrain(m_essence.makeGrain(), m_maxgrains);

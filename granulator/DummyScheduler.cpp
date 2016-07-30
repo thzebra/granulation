@@ -1,6 +1,5 @@
 #include "DummyScheduler.hpp"
 #include "math.h"
-#include <QDebug>
 
 namespace Granulation {
 namespace Synthesis {
@@ -8,7 +7,6 @@ namespace Synthesis {
 DummyScheduler::DummyScheduler() : index(0) {}
 
 float DummyScheduler::synthetize(int maxgrains, bool loop) {
-    //qDebug() << "plop" << index;
     return sin(2.f * M_PI * index++ * 440.f / 48000.f);
 }
 
