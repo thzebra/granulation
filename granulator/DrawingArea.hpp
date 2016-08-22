@@ -14,7 +14,8 @@ namespace Granulation {
 namespace Panel {
 
 /**
- * @brief The DrawingArea class is a QWidget with a white background that captures mouse events.
+ * @brief The DrawingArea class is a QWidget with a white background that
+ * captures mouse events.
  */
 
 class DrawingArea final : public QWidget {

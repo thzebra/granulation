@@ -53,10 +53,8 @@ float Scheduler::synthetize(int maxgrains, bool loop) {
 void Scheduler::synthetize(gsl::span<float> vec, int maxgrains, bool loop) {
     std::lock_guard<std::mutex> lock(m_grainsLock);
 
-    /*
-     * Remove grains that are marked as toRemove, ie grains that are finished
-     * or that have been replaced by newer grains
-     */
+    /// Remove grains that are marked as toRemove, ie grains that are finished
+    /// or that have been replaced by newer grains
 
     while (m_grains.size() > 0 && m_grains.begin()->toRemove()) {
         m_grains.pop_front();

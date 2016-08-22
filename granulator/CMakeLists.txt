@@ -5,7 +5,7 @@ set(EXECNAME granulator)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -flto -Wsuggest-final-types -std=c++14")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -march=native -flto -Wsuggest-final-types -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -march=native -flto -fsanitize=undefined -Wsuggest-final-types -std=c++14")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -flto -Wsuggest-final-types")
 
 find_package(Qt5 5.3 REQUIRED COMPONENTS Core Widgets Multimedia)

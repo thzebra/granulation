@@ -27,7 +27,20 @@ public:
      */
 
     virtual bool update(double streamTime) = 0;
+
+    /**
+     * @brief Get the total time elapsed since the beginning
+     * @return The time elapsed since the beginning, as it was
+     * at the last call of update.
+     */
+
     double totalTime() const;
+
+    /**
+     * @brief Sets the interonset
+     * @param i:
+     */
+
     virtual void setInteronset(int i);
 
 protected:

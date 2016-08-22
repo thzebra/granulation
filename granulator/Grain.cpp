@@ -147,7 +147,7 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
             }
         }
     }
-    else
+    else /// The entire data array was retrieved in fast_data
     {   
         if(!m_readBackwards)
         {
@@ -197,6 +197,8 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
                 }
             }
 
+
+            /// The commented code below is an older version kept as reference.
             // This should be the most taken branch
 //            for(int i = 0; i < nOutFrames && !m_completed; ++i)
 //            {
@@ -221,7 +223,7 @@ void Grain::synthetize(gsl::span<float> vec, bool loop) {
 //                }
 //            }
         }
-        else
+        else /// Grain is read backwards
         {
             const int nOutFramesChan = (const int) (nOutFrames / nc);
             float ** toProcess = (float**)alloca(sizeof(float *) * nc);

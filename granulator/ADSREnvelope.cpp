@@ -14,9 +14,15 @@ void ADSREnvelope::fill() {
         return;
 
     double srms = m_sampleRate / 1000.f;
+
+    /// Converting the attack, decay and release time in number
+    /// of samples.
+
     int natt = m_attack * srms;
     int ndec = m_decay * srms;
     int nrel = m_release * srms;
+
+    /// Sustain time is any time left.
 
     if (natt + ndec + nrel > size()) {
         if (natt + nrel > size()) {

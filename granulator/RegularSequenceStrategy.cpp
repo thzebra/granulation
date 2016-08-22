@@ -23,7 +23,7 @@ bool RegularSequenceStrategy::update(double streamTime) {
         double deltatime = streamTime - m_totalTime;
         m_totalTime = streamTime;
 
-        // Is it time to activate a new grain?
+        /// Is it time to activate a new grain?
 
         m_timeSinceLastOnset += deltatime * 1000;
         int next = nextOnset();

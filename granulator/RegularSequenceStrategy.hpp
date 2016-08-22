@@ -5,6 +5,11 @@
 namespace Granulation {
 namespace Synthesis {
 
+/**
+ * @brief The RegularSequenceStrategy class is a Strategy class that activates
+ * grains at regular intervals.
+ */
+
 class RegularSequenceStrategy final : public SequenceStrategy {
 public:
     RegularSequenceStrategy();

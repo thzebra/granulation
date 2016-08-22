@@ -11,6 +11,15 @@ namespace Granulation {
 namespace Synthesis {
 
 template <class Env, class Src>
+
+/**
+ * @brief The Granulator class manages Grains.
+ *
+ * It implements all functions of its parent class GranulatorBase. It contains
+ * a Scheduler for scheduling grain activation and an Essence able to make
+ * Grains.
+ */
+
 class Granulator final : public GranulatorBase
 {
 public:

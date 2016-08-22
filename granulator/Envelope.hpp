@@ -120,10 +120,10 @@ public:
 protected:
     std::vector<float> m_data;
 
-    int m_attack{50};
-    int m_decay{0};
-    int m_release{50};
-    int m_sampleRate{44100};
+    int m_attack{50}; /// Attack duration in milliseconds ///
+    int m_decay{0}; /// Decay duration in milliseconds ///
+    int m_release{50}; /// Release duration in milliseconds ///
+    int m_sampleRate{44100}; /// Sample rate in Hz ///
 };
 
 
